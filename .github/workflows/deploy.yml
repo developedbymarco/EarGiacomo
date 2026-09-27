@@ -1,0 +1,75 @@
+# Deploys EarGiacomo to a private VPS and reloads it under PM2.
+#
+# Repository secrets:
+#   VPS_HOST       server address
+#   VPS_USER       SSH user
+#   VPS_SSH_KEY    private key for that user
+#   VPS_PORT       optional, defaults to 22
+#   VPS_APP_DIR    optional, defaults to /var/www/eargiacomo
+#
+# The server keeps .env.local. This workflow never copies env files.
+# One-time server setup: Node.js 24, PM2 on the deploy user's PATH,
+# `pm2 startup` so the process returns after reboot, and a reverse
+# proxy aimed at 127.0.0.1:3000.
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: vps-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      APP_DIR: ${{ secrets.VPS_APP_DIR || '/var/www/eargiacomo' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy the app to the VPS
+        uses: easingthemes/ssh-deploy@v5.1.0
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.VPS_HOST }}
+          REMOTE_USER: ${{ secrets.VPS_USER }}
+          REMOTE_PORT: ${{ secrets.VPS_PORT || 22 }}
+          SOURCE: "./"
+          TARGET: ${{ env.APP_DIR }}
+          EXCLUDE: "/node_modules/, /.next/, /.git/, /coverage/, /.env*"
+          ARGS: "--delete"
+          SCRIPT_BEFORE: |
+            mkdir -p "${{ env.APP_DIR }}"
+
+      - name: Build and reload PM2
+        uses: appleboy/ssh-action@v1.2.2
+        env:
+          APP_DIR: ${{ env.APP_DIR }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          command_timeout: 20m
+          envs: APP_DIR
+          script: bash "$APP_DIR/scripts/vps-deploy.sh"
