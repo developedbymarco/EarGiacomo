@@ -251,12 +251,12 @@ export function ExerciseSession() {
   );
 }
 
-const recordedResults = new Map<string, Promise<{ message: string | null; refresh: boolean }>>();
+const recordedResults = new Map<string, Promise<{ note: string | null; giacominos: number; xp: number; refresh: boolean }>>();
 
 function Results({ onAgain, againLabel }: { onAgain: () => void; againLabel: string }) {
   const router = useRouter();
   const records = useExerciseStore((state) => state.records);
-  const [savedNote, setSavedNote] = useState<string | null>(null);
+  const [saved, setSaved] = useState<{ note: string | null; giacominos: number; xp: number } | null>(null);
   const scores = summarize(records);
   const best = strongest(scores);
   const review = weakest(scores.filter((score) => score.correct < score.total));
@@ -281,7 +281,9 @@ function Results({ onAgain, againLabel }: { onAgain: () => void; againLabel: str
           repeats: record.repeats,
         })),
       }).then((result) => ({
-        message: savedMessage(result, meta.mode),
+        note: savedMessage(result, meta.mode),
+        giacominos: result.saved && !result.duplicate ? result.giacominosEarned : 0,
+        xp: result.saved && !result.duplicate ? result.xpEarned : 0,
         refresh: result.saved && !result.duplicate,
       }));
       recordedResults.set(token, pending);
@@ -289,7 +291,7 @@ function Results({ onAgain, againLabel }: { onAgain: () => void; againLabel: str
     let cancelled = false;
     void pending.then((outcome) => {
       if (cancelled) return;
-      setSavedNote(outcome.message);
+      setSaved({ note: outcome.note, giacominos: outcome.giacominos, xp: outcome.xp });
       if (outcome.refresh) router.refresh();
     });
     return () => {
@@ -351,7 +353,12 @@ function Results({ onAgain, againLabel }: { onAgain: () => void; againLabel: str
         </ul>
       ) : null}
       {repeats > 0 ? <p className="text-parchment">Repeats this session: {repeats}</p> : null}
-      {savedNote ? <p className="text-parchment">{savedNote}</p> : null}
+      {saved && saved.giacominos > 0 ? (
+        <RoundPayout questions={records.length} correct={correct} giacominos={saved.giacominos} xp={saved.xp} />
+      ) : saved ? null : (
+        <p className="text-parchment">Saving this round…</p>
+      )}
+      {saved?.note ? <p className="text-parchment">{saved.note}</p> : null}
       <div className="flex flex-wrap gap-3">
         {records.some((record) => !record.correct) ? (
           <Button type="button" onClick={practiceMistakes}>
@@ -366,17 +373,30 @@ function Results({ onAgain, againLabel }: { onAgain: () => void; againLabel: str
   );
 }
 
+function RoundPayout({ questions, correct, giacominos, xp }: { questions: number; correct: number; giacominos: number; xp: number }) {
+  const play = questions * 2;
+  const fromAnswers = correct * 8;
+  const bonus = giacominos - play - fromAnswers;
+  const parts = [
+    `${play} for finishing`,
+    correct > 0 ? `${fromAnswers} for correct answers` : null,
+    bonus > 0 ? `${bonus} for the lesson` : null,
+  ].filter((part): part is string => Boolean(part));
+  return (
+    <section className="rounded-3xl border-2 border-gold bg-plum px-6 py-6" aria-live="polite">
+      <p className="font-serif text-6xl text-gold">+{giacominos}</p>
+      <p className="text-xl text-cream">Giacominos this round</p>
+      {bonus >= 0 ? <p className="mt-2 text-parchment">{parts.join(" · ")}</p> : null}
+      {xp > 0 ? <p className="mt-3 text-lg text-parchment">+{xp} XP</p> : null}
+    </section>
+  );
+}
+
 function savedMessage(result: RecordResult, mode: "practice" | "guided" | "review" | "exam"): string | null {
   if (!result.saved) {
     return result.reason === "unavailable" ? "This session stayed on this browser. It was not saved to your account." : null;
   }
   if (result.duplicate) return null;
-  const reward = [
-    result.xpEarned > 0 ? `+${result.xpEarned} XP` : null,
-    result.giacominosEarned > 0 ? `+${result.giacominosEarned} Giacominos` : null,
-  ]
-    .filter((part): part is string => Boolean(part))
-    .join(", ");
   const opened = result.unlocked.map((slug) => CURRICULUM_NODES.find((node) => node.slug === slug)?.title ?? slug);
   const shop = result.purchasable.map((lesson) => {
     const title = CURRICULUM_NODES.find((node) => node.slug === lesson.slug)?.title ?? lesson.slug;
@@ -386,7 +406,6 @@ function savedMessage(result: RecordResult, mode: "practice" | "guided" | "revie
     result.passed ? "Lesson passed." : null,
     opened.length > 0 ? `Opened ${opened.join(" and ")}.` : null,
     shop.length > 0 ? `${shop.join(" and ")} can be unlocked.` : null,
-    reward || null,
   ].filter((part): part is string => Boolean(part));
   if (parts.length > 0) return parts.join(" ");
   if (mode === "guided") return "Saved. Eight of ten opens the next step.";

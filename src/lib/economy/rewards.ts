@@ -1,10 +1,10 @@
 const COST_BY_DIFFICULTY: Record<number, number> = { 1: 30, 2: 40, 3: 60, 4: 80 };
 
-const GIACOMINOS_BY_DIFFICULTY: Record<number, { first: number; repeat: number }> = {
-  1: { first: 15, repeat: 5 },
-  2: { first: 25, repeat: 8 },
-  3: { first: 35, repeat: 10 },
-  4: { first: 50, repeat: 15 },
+const PASS_BONUS_BY_DIFFICULTY: Record<number, { first: number; repeat: number }> = {
+  1: { first: 40, repeat: 16 },
+  2: { first: 60, repeat: 24 },
+  3: { first: 80, repeat: 32 },
+  4: { first: 100, repeat: 40 },
 };
 
 export function unlockCostFor(input: { difficulty: number; prerequisites: readonly string[] }): number {
@@ -38,17 +38,24 @@ export function xpForSession(input: {
   return xp;
 }
 
-export function giacominosForCompletion(input: {
-  difficulty: number;
-  firstCompletion: boolean;
-  alreadyMastered: boolean;
-  dailyBonus: boolean;
-  masteryBonus: boolean;
+export function giacominosForSession(input: {
+  questions: number;
+  correct: number;
+  difficulty?: number;
+  guidedPass?: boolean;
+  firstPass?: boolean;
+  alreadyMastered?: boolean;
+  dailyBonus?: boolean;
+  masteryBonus?: boolean;
 }): number {
-  const row = GIACOMINOS_BY_DIFFICULTY[input.difficulty] ?? GIACOMINOS_BY_DIFFICULTY[1]!;
-  let amount = input.firstCompletion ? row.first : row.repeat;
-  if (input.alreadyMastered) amount = Math.max(2, Math.floor(amount / 2));
-  if (input.dailyBonus) amount += 10;
-  if (input.masteryBonus) amount += 10;
+  let amount = input.questions * 2 + input.correct * 8;
+  if (input.guidedPass) {
+    const row = PASS_BONUS_BY_DIFFICULTY[input.difficulty ?? 1] ?? PASS_BONUS_BY_DIFFICULTY[1]!;
+    let bonus = input.firstPass ? row.first : row.repeat;
+    if (input.alreadyMastered) bonus = Math.max(8, Math.floor(bonus / 2));
+    amount += bonus;
+    if (input.dailyBonus) amount += 20;
+    if (input.masteryBonus) amount += 20;
+  }
   return amount;
 }

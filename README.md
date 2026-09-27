@@ -19,6 +19,7 @@ Practice works without an account. Accounts use hosted Supabase:
 8. Run `supabase/migrations/20260927220000_reward_payout.sql` so a path lesson is saved, the Giacominos stay on your balance, and any path pass already stored is credited.
 9. Run `supabase/migrations/20260927230000_friends.sql` for friend requests, blocks, and profile privacy.
 10. Run `supabase/migrations/20260927240000_battles.sql` for friend battles. A match can be free, or staked at 10, 25, or 50 Giacominos.
+11. Run `supabase/migrations/20260928000000_round_payout.sql` so every round pays Giacominos, including a round with no correct answers.
 
 The finished site is meant to run on a VPS. Auth and data stay on hosted Supabase.
 

@@ -3,7 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { CURRICULUM_NODES } from "@/lib/curriculum/seed";
 import {
-  giacominosForCompletion,
+  giacominosForSession,
   levelForXp,
   unlockCostFor,
   xpForSession,
@@ -25,46 +25,37 @@ describe("economy", () => {
     expect(xpForSession({ questions: 10, correct: 10, repeats: 0, guidedPass: false, lessonXp: 10 })).toBe(50);
   });
 
-  it("pays the spec example for a first chord lesson and less for a repeat", () => {
-    expect(
-      giacominosForCompletion({
-        difficulty: 1,
-        firstCompletion: true,
-        alreadyMastered: false,
-        dailyBonus: false,
-        masteryBonus: false,
-      }),
-    ).toBe(15);
-    expect(
-      giacominosForCompletion({
-        difficulty: 1,
-        firstCompletion: false,
-        alreadyMastered: false,
-        dailyBonus: false,
-        masteryBonus: false,
-      }),
-    ).toBe(5);
+  it("pays for every question, more for each correct answer, and still pays when none are correct", () => {
+    const sql = readFileSync(path.join(process.cwd(), "supabase/migrations/20260928000000_round_payout.sql"), "utf8");
+    expect(sql).toContain("v_coins := total * 2 + correct_count * 8");
+    expect(sql).toContain("case when prior_passes = 0 then 40 else 16 end");
+    expect(giacominosForSession({ questions: 10, correct: 0 })).toBe(20);
+    expect(giacominosForSession({ questions: 10, correct: 10 })).toBe(100);
+    expect(giacominosForSession({ questions: 10, correct: 8 })).toBe(84);
   });
 
-  it("halves a mastered repeat, adds the daily bonus, and adds a mastery bonus", () => {
+  it("adds a larger lesson bonus for a guided pass, including a repeat and a mastered pass", () => {
     expect(
-      giacominosForCompletion({
+      giacominosForSession({
+        questions: 10,
+        correct: 8,
+        difficulty: 1,
+        guidedPass: true,
+        firstPass: true,
+      }),
+    ).toBe(84 + 40);
+    expect(
+      giacominosForSession({
+        questions: 10,
+        correct: 8,
         difficulty: 2,
-        firstCompletion: false,
+        guidedPass: true,
+        firstPass: false,
         alreadyMastered: true,
         dailyBonus: true,
-        masteryBonus: false,
-      }),
-    ).toBe(Math.floor(8 / 2) + 10);
-    expect(
-      giacominosForCompletion({
-        difficulty: 2,
-        firstCompletion: true,
-        alreadyMastered: false,
-        dailyBonus: false,
         masteryBonus: true,
       }),
-    ).toBe(35);
+    ).toBe(84 + Math.floor(24 / 2) + 20 + 20);
   });
 
   it("prices the next lesson from difficulty and leaves the first lesson free", () => {
