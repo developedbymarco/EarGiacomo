@@ -61,6 +61,14 @@ jobs:
           SCRIPT_BEFORE: |
             mkdir -p "${{ env.APP_DIR }}"
 
+      - name: Install the deploy key
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          umask 077
+          printf '%s\n' "$VPS_SSH_KEY" > "$RUNNER_TEMP/deploy_key"
+          grep -q "BEGIN .*PRIVATE KEY" "$RUNNER_TEMP/deploy_key"
+
       - name: Build and reload PM2
         uses: appleboy/ssh-action@v1.2.2
         env:
@@ -68,7 +76,7 @@ jobs:
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          key_path: ${{ runner.temp }}/deploy_key
           port: ${{ secrets.VPS_PORT || 22 }}
           command_timeout: 20m
           envs: APP_DIR

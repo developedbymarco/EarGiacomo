@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   blockPlayerAction,
   removeFriendAction,
@@ -23,6 +24,12 @@ export function FriendControls({
   if (relation === "friends" && friendshipId) {
     return (
       <div className="flex flex-wrap gap-3">
+        <Link
+          href={`/battles/challenge/${username}`}
+          className="inline-flex items-center justify-center rounded-full bg-gold px-5 py-3 text-base font-semibold text-espresso hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cream"
+        >
+          Challenge
+        </Link>
         <form action={removeFriendAction}>
           <input type="hidden" name="id" value={friendshipId} />
           <input type="hidden" name="returnTo" value={returnTo} />

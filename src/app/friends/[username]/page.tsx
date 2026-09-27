@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { FriendControls } from "@/components/friends/FriendControls";
 import { getAccountContext } from "@/lib/account/session";
+import { loadBattleRecord } from "@/lib/battles/load";
 import { loadPlayer } from "@/lib/friends/load";
 
 const notices: Record<string, string> = {
@@ -50,6 +51,7 @@ export default async function FriendProfilePage({
   }
 
   const profile = player.data;
+  const record = profile.relation === "friends" ? await loadBattleRecord(profile.username) : null;
   const notice = query.notice ? notices[query.notice] : null;
   const error = query.error ? errors[query.error] ?? "That action could not be finished." : null;
   const returnTo = `/friends/${profile.username}`;
@@ -70,6 +72,12 @@ export default async function FriendProfilePage({
         <p className="text-parchment">Their level and accuracy stay hidden until you are friends.</p>
       ) : null}
       {profile.accuracy != null ? <p className="text-parchment">Accuracy {profile.accuracy}% across practiced questions.</p> : null}
+      {record?.visible ? (
+        <p className="text-parchment">
+          Battles together: {record.played}. You have {record.wins} {record.wins === 1 ? "win" : "wins"}, {record.losses}{" "}
+          {record.losses === 1 ? "loss" : "losses"}, and {record.draws} {record.draws === 1 ? "draw" : "draws"}.
+        </p>
+      ) : null}
       {notice ? <p className="text-cream">{notice}</p> : null}
       {error ? <p className="text-rose">{error}</p> : null}
       <FriendControls username={profile.username} relation={profile.relation} friendshipId={profile.friendshipId} returnTo={returnTo} />
