@@ -17,6 +17,7 @@ Practice works without an account. Accounts use hosted Supabase:
 6. Run `supabase/migrations/20260927200000_economy.sql` so practice pays XP and Giacominos, and the next lesson has a price.
 7. Run `supabase/migrations/20260927210000_depth.sql` for sixths through the fifteenth, inversions, sevenths, cadences, and the two extra piano characters.
 8. Run `supabase/migrations/20260927220000_reward_payout.sql` so a path lesson is saved, the Giacominos stay on your balance, and any path pass already stored is credited.
+9. Run `supabase/migrations/20260927230000_friends.sql` for friend requests, blocks, and profile privacy.
 
 The finished site is meant to run on a VPS. Auth and data stay on hosted Supabase.
 

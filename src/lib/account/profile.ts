@@ -34,6 +34,13 @@ export const signupSchema = z
     path: ["confirm"],
   });
 
+export const privacySchema = z.object({
+  profileVisibility: z.enum(["public", "friends", "private"]),
+  showAccuracy: z.boolean(),
+  allowChallenges: z.boolean(),
+  showBattleHistory: z.boolean(),
+});
+
 export const profileFormSchema = z
   .object({
     username: usernameSchema,

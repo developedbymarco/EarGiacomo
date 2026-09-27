@@ -31,6 +31,11 @@ export function SiteHeader({
             Exam
           </Link>
           {signedIn ? (
+            <Link href="/friends" className={navLink}>
+              Friends
+            </Link>
+          ) : null}
+          {signedIn ? (
             <>
               {xp != null && giacominos != null ? <RewardSummary xp={xp} giacominos={giacominos} /> : null}
               <Link href="/account" className={navLink}>

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AccountForm } from "@/components/auth/AccountForm";
+import { PrivacyForm } from "@/components/friends/PrivacyForm";
 import { SetupNotice } from "@/components/auth/SetupNotice";
 import { getAccountContext } from "@/lib/account/session";
 import { levelForXp, xpToReachLevel } from "@/lib/economy/rewards";
@@ -37,6 +38,16 @@ export default async function AccountPage() {
         rangeLow={account.profile.default_range_low ?? 48}
         rangeHigh={account.profile.default_range_high ?? 72}
       />
+      {account.friendsReady ? (
+        <div className="mx-auto max-w-xl">
+          <PrivacyForm
+            profileVisibility={account.profile.profile_visibility}
+            showAccuracy={account.profile.show_accuracy}
+            allowChallenges={account.profile.allow_challenges}
+            showBattleHistory={account.profile.show_battle_history}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
