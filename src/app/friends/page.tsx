@@ -1,10 +1,10 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { FriendControls } from "@/components/friends/FriendControls";
-import { fieldClass } from "@/components/auth/AuthCard";
-import { Button } from "@/components/ui/button";
+import { PlayerAvatar } from "@/components/friends/PlayerAvatar";
 import { getAccountContext } from "@/lib/account/session";
-import { loadFriendLists, searchPlayers, type FriendCard } from "@/lib/friends/load";
+import { loadFriendLists, searchPlayers, type FriendCard, type FriendRelation } from "@/lib/friends/load";
 
 const notices: Record<string, string> = {
   sent: "Friend request sent.",
@@ -41,63 +41,68 @@ export default async function FriendsPage({
   const found = query.length >= 2 && lists.ready ? await searchPlayers(query) : null;
   const notice = params.notice ? notices[params.notice] : null;
   const error = params.error ? errors[params.error] ?? "That action could not be finished." : null;
+  const returnTo = query ? `/friends?q=${encodeURIComponent(query)}` : "/friends";
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="font-serif text-5xl text-cream">Friends</h1>
-        <p className="mt-3 text-lg text-parchment">Search by username, then send a request.</p>
-      </div>
-      {notice ? <p className="text-cream">{notice}</p> : null}
-      {error ? <p className="text-rose">{error}</p> : null}
+    <div className="mx-auto max-w-lg space-y-6">
+      <h1 className="font-serif text-4xl text-cream">Friends</h1>
+      {notice ? <p className="rounded-2xl bg-plum/60 px-4 py-3 text-sm text-cream">{notice}</p> : null}
+      {error ? <p className="rounded-2xl bg-plum/60 px-4 py-3 text-sm text-rose">{error}</p> : null}
       {!lists.ready ? (
-        <p className="text-lg text-parchment">
-          Friend requests are not in this Supabase project yet. Run <code>supabase/migrations/20260927230000_friends.sql</code> in the
-          SQL editor, then reload.
+        <p className="text-cream/75">
+          Friend requests are not in this Supabase project yet. Run supabase/migrations/20260927230000_friends.sql in the SQL editor, then reload.
         </p>
       ) : (
         <>
-          <form action="/friends" className="flex flex-wrap items-end gap-3">
-            <label className="block min-w-64 flex-1 text-parchment" htmlFor="q">
-              Username
-              <input id="q" name="q" defaultValue={query} autoComplete="off" className={fieldClass} />
+          <form action="/friends" className="relative">
+            <label className="sr-only" htmlFor="q">
+              Search username
             </label>
-            <Button type="submit">Search</Button>
+            <SearchMark />
+            <input
+              id="q"
+              name="q"
+              defaultValue={query}
+              autoComplete="off"
+              placeholder="Search"
+              className="w-full rounded-full bg-cream/10 py-3 pr-4 pl-11 text-cream placeholder:text-cream/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cream"
+            />
+            <button type="submit" className="sr-only">
+              Search
+            </button>
           </form>
-          {query.length === 1 ? <p className="text-parchment">Use at least 2 characters.</p> : null}
-          {found && !found.ready ? (
-            <p className="text-parchment">Run the friends migration, then search again.</p>
-          ) : null}
-          {found && found.ready && "error" in found ? <p className="text-rose">{found.error}</p> : null}
+          {query.length === 1 ? <p className="text-sm text-cream/60">Use at least 2 characters.</p> : null}
+          {found && !found.ready ? <p className="text-sm text-cream/60">Run the friends migration, then search again.</p> : null}
+          {found && found.ready && "error" in found ? <p className="text-sm text-rose">{found.error}</p> : null}
           {found && found.ready && "data" in found ? (
-            <section className="space-y-3">
-              <h2 className="font-serif text-3xl text-cream">Results</h2>
-              {found.data.length === 0 ? <p className="text-parchment">No player matches that username.</p> : null}
-              <ul className="space-y-3">
-                {found.data.map((hit) => (
-                  <li key={hit.username} className="rounded-3xl border border-gold/30 bg-plum/40 p-5">
-                    <PlayerLine username={hit.username} displayName={hit.displayName} level={hit.level} />
-                    <div className="mt-4">
-                      <FriendControls
-                        username={hit.username}
-                        relation={hit.relation}
-                        friendshipId={hit.friendshipId}
-                        returnTo={query ? `/friends?q=${encodeURIComponent(query)}` : "/friends"}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </section>
+            <Section title="Results">
+              {found.data.length === 0 ? (
+                <p className="px-1 text-sm text-cream/60">No player matches that username.</p>
+              ) : (
+                <ul className="overflow-hidden rounded-2xl bg-plum/50">
+                  {found.data.map((hit) => (
+                    <PersonRow
+                      key={hit.username}
+                      username={hit.username}
+                      displayName={hit.displayName}
+                      level={hit.level}
+                      relation={hit.relation}
+                      friendshipId={hit.friendshipId}
+                      returnTo={returnTo}
+                    />
+                  ))}
+                </ul>
+              )}
+            </Section>
           ) : null}
-          {"error" in lists ? <p className="text-rose">{lists.error}</p> : null}
+          {"error" in lists ? <p className="text-sm text-rose">{lists.error}</p> : null}
           {"data" in lists ? (
-            <div className="grid gap-8 lg:grid-cols-2">
-              <Roster title="Requests" empty="No requests waiting." people={lists.data.incoming} incoming />
-              <Roster title="Sent" empty="No requests sent." people={lists.data.outgoing} />
-              <Roster title="Friends" empty="No friends yet." people={lists.data.friends} />
-              <Roster title="Blocked" empty="No blocked players." people={lists.data.blocked} blocked />
-            </div>
+            <>
+              <Roster title="Requests" empty="No requests waiting." people={lists.data.incoming} relation="pending_in" />
+              {lists.data.outgoing.length > 0 ? <Roster title="Sent" empty="" people={lists.data.outgoing} relation="pending_out" /> : null}
+              <Roster title="Friends" empty="No friends yet. Search for a username." people={lists.data.friends} relation="friends" />
+              {lists.data.blocked.length > 0 ? <Roster title="Blocked" empty="" people={lists.data.blocked} relation="blocked" /> : null}
+            </>
           ) : null}
         </>
       )}
@@ -105,17 +110,39 @@ export default async function FriendsPage({
   );
 }
 
-function PlayerLine({ username, displayName, level }: { username: string; displayName: string | null; level: number | null }) {
+function PersonRow({
+  username,
+  displayName,
+  level,
+  relation,
+  friendshipId,
+  returnTo,
+}: {
+  username: string;
+  displayName: string | null;
+  level: number | null;
+  relation: FriendRelation;
+  friendshipId: string | null;
+  returnTo: string;
+}) {
+  const name = displayName || username;
   return (
-    <div>
-      <Link href={`/friends/${username}`} className="font-serif text-3xl text-cream hover:text-gold">
-        {displayName || username}
+    <li className="flex items-center gap-3 border-b border-cream/10 px-3 py-2.5 last:border-b-0">
+      <Link
+        href={`/friends/${username}`}
+        className="flex min-w-0 flex-1 items-center gap-3 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cream"
+      >
+        <PlayerAvatar name={name} />
+        <span className="min-w-0">
+          <span className="block truncate font-semibold text-cream">{name}</span>
+          <span className="block truncate text-sm text-cream/60">
+            @{username}
+            {level != null ? ` · Lv ${level}` : ""}
+          </span>
+        </span>
       </Link>
-      <p className="text-parchment">
-        @{username}
-        {level != null ? ` · Level ${level}` : ""}
-      </p>
-    </div>
+      <FriendControls layout="row" username={username} relation={relation} friendshipId={friendshipId} returnTo={returnTo} />
+    </li>
   );
 }
 
@@ -123,34 +150,49 @@ function Roster({
   title,
   empty,
   people,
-  incoming = false,
-  blocked = false,
+  relation,
 }: {
   title: string;
   empty: string;
   people: FriendCard[];
-  incoming?: boolean;
-  blocked?: boolean;
+  relation: FriendRelation;
 }) {
   return (
-    <section className="space-y-3">
-      <h2 className="font-serif text-3xl text-cream">{title}</h2>
-      {people.length === 0 ? <p className="text-parchment">{empty}</p> : null}
-      <ul className="space-y-3">
-        {people.map((person) => (
-          <li key={person.id} className="rounded-3xl border border-gold/30 bg-plum/40 p-5">
-            <PlayerLine username={person.username} displayName={person.displayName} level={person.level} />
-            <div className="mt-4">
-              <FriendControls
-                username={person.username}
-                relation={blocked ? "blocked" : incoming ? "pending_in" : person.level != null ? "friends" : "pending_out"}
-                friendshipId={person.id}
-                returnTo="/friends"
-              />
-            </div>
-          </li>
-        ))}
-      </ul>
+    <Section title={title}>
+      {people.length === 0 ? <p className="px-1 text-sm text-cream/60">{empty}</p> : null}
+      {people.length > 0 ? (
+        <ul className="overflow-hidden rounded-2xl bg-plum/50">
+          {people.map((person) => (
+            <PersonRow
+              key={person.id}
+              username={person.username}
+              displayName={person.displayName}
+              level={person.level}
+              relation={relation}
+              friendshipId={person.id}
+              returnTo="/friends"
+            />
+          ))}
+        </ul>
+      ) : null}
+    </Section>
+  );
+}
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="space-y-2">
+      <h2 className="px-1 text-sm font-semibold text-cream/70">{title}</h2>
+      {children}
     </section>
+  );
+}
+
+function SearchMark() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-cream/50" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <circle cx="11" cy="11" r="6" />
+      <path d="M16 16.5 20 20.5" strokeLinecap="round" />
+    </svg>
   );
 }

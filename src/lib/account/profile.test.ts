@@ -18,6 +18,7 @@ describe("account profile", () => {
       displayName: "Marco",
       rangeLow: 72,
       rangeHigh: 48,
+      noteNames: "letters",
     });
     expect(result.success).toBe(false);
     if (!result.success) expect(firstIssue(result.error)).toMatch(/highest note/i);

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { FriendControls } from "@/components/friends/FriendControls";
+import { PlayerAvatar } from "@/components/friends/PlayerAvatar";
 import { getAccountContext } from "@/lib/account/session";
 import { loadBattleRecord } from "@/lib/battles/load";
 import { loadPlayer } from "@/lib/friends/load";
@@ -56,31 +57,45 @@ export default async function FriendProfilePage({
   const error = query.error ? errors[query.error] ?? "That action could not be finished." : null;
   const returnTo = `/friends/${profile.username}`;
 
+  const name = profile.displayName || profile.username;
+  const hidden = profile.relation !== "self" && profile.level == null && profile.relation !== "blocked";
+
   return (
-    <div className="space-y-6">
-      <p>
-        <Link href="/friends" className="text-gold underline-offset-4 hover:underline">
-          All friends
-        </Link>
-      </p>
-      <h1 className="font-serif text-5xl text-cream">{profile.displayName || profile.username}</h1>
-      <p className="text-lg text-parchment">
-        @{profile.username}
-        {profile.level != null ? ` · Level ${profile.level}` : ""}
-      </p>
-      {profile.relation !== "self" && profile.level == null && profile.relation !== "blocked" ? (
-        <p className="text-parchment">Their level and accuracy stay hidden until you are friends.</p>
-      ) : null}
-      {profile.accuracy != null ? <p className="text-parchment">Accuracy {profile.accuracy}% across practiced questions.</p> : null}
+    <div className="mx-auto max-w-lg space-y-6">
+      <Link href="/friends" className="text-sm text-cream/70 hover:text-cream">
+        Friends
+      </Link>
+      <div className="flex items-center gap-4">
+        <PlayerAvatar name={name} className="size-20 text-3xl" />
+        <div className="min-w-0">
+          <h1 className="truncate font-serif text-4xl text-cream">{name}</h1>
+          <p className="truncate text-cream/60">@{profile.username}</p>
+        </div>
+      </div>
+      {hidden ? <p className="text-sm text-cream/60">Level and accuracy stay hidden until you are friends.</p> : null}
+      <dl className="grid grid-cols-3 text-center">
+        <Stat label="Level" value={profile.level != null ? String(profile.level) : "—"} />
+        <Stat label="Accuracy" value={profile.accuracy != null ? `${profile.accuracy}%` : "—"} />
+        <Stat label="Battles" value={record?.visible ? String(record.played) : "—"} />
+      </dl>
       {record?.visible ? (
-        <p className="text-parchment">
-          Battles together: {record.played}. You have {record.wins} {record.wins === 1 ? "win" : "wins"}, {record.losses}{" "}
-          {record.losses === 1 ? "loss" : "losses"}, and {record.draws} {record.draws === 1 ? "draw" : "draws"}.
+        <p className="text-center text-sm text-cream/60">
+          {record.wins} {record.wins === 1 ? "win" : "wins"} · {record.losses} {record.losses === 1 ? "loss" : "losses"} · {record.draws}{" "}
+          {record.draws === 1 ? "draw" : "draws"}
         </p>
       ) : null}
-      {notice ? <p className="text-cream">{notice}</p> : null}
-      {error ? <p className="text-rose">{error}</p> : null}
+      {notice ? <p className="rounded-2xl bg-plum/60 px-4 py-3 text-sm text-cream">{notice}</p> : null}
+      {error ? <p className="rounded-2xl bg-plum/60 px-4 py-3 text-sm text-rose">{error}</p> : null}
       <FriendControls username={profile.username} relation={profile.relation} friendshipId={profile.friendshipId} returnTo={returnTo} />
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col">
+      <dt className="order-2 text-xs text-cream/55">{label}</dt>
+      <dd className="order-1 text-lg font-semibold text-cream">{value}</dd>
     </div>
   );
 }
