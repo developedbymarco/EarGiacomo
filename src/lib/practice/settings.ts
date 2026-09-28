@@ -50,7 +50,7 @@ export const DEFAULT_DRAFT: PracticeDraft = {
   triads: [],
   sevenths: [],
   directions: ["ascending"],
-  presentations: ["harmonic"],
+  presentations: ["melodicAscending"],
   modes: ["audio"],
   pianoId: CONCERT_GRAND.id,
   voicing: "closed",

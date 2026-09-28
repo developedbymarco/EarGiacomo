@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { StartLessonButton } from "@/components/path/StartLessonButton";
 import { UnlockLessonButton } from "@/components/path/UnlockLessonButton";
@@ -11,6 +12,7 @@ import {
   statusLabel,
 } from "@/lib/curriculum/progress";
 import { PATHS } from "@/lib/curriculum/seed";
+import { scenes } from "@/lib/home/scenes";
 
 export default async function PathHomePage() {
   const data = await getPathData();
@@ -29,6 +31,7 @@ export default async function PathHomePage() {
       </div>
 
       {!data.ready ? <MigrationNotice /> : null}
+      {data.ready && !data.presentationReady ? <PresentationNotice /> : null}
       {data.ready && !data.depthReady ? <DepthNotice /> : null}
       {data.ready && !data.economyReady ? <EconomyNotice /> : null}
 
@@ -102,18 +105,38 @@ export default async function PathHomePage() {
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        {PATHS.map((path) => (
-          <Link
-            key={path.id}
-            href={`/path/${path.id}`}
-            className="rounded-3xl border border-gold/30 bg-plum/40 p-5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cream"
-          >
-            <h2 className="font-serif text-3xl text-cream">{path.title}</h2>
-            <p className="mt-2 text-parchment">{path.lede}</p>
-          </Link>
-        ))}
+        {PATHS.map((path) => {
+          const scene = scenes[path.id];
+          return (
+            <Link
+              key={path.id}
+              href={`/path/${path.id}`}
+              className="overflow-hidden rounded-3xl border border-gold/30 bg-plum/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cream"
+            >
+              <div className="relative aspect-[4/3]">
+                <Image src={scene.src} alt={scene.alt} fill sizes="(min-width: 640px) 24rem, 100vw" className="object-cover" />
+              </div>
+              <div className="p-5">
+                <h2 className="font-serif text-3xl text-cream">{path.title}</h2>
+                <p className="mt-2 text-parchment">{path.lede}</p>
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </div>
+  );
+}
+
+function PresentationNotice() {
+  return (
+    <section className="rounded-3xl border border-gold/40 bg-plum/70 p-5">
+      <h2 className="font-serif text-3xl text-cream">How a lesson is played</h2>
+      <p className="mt-2 text-parchment">
+        Run <span className="text-cream">supabase/migrations/20260928010000_presentation_lessons.sql</span> in the Supabase SQL
+        editor, then reload. Ascending, descending, melodic, harmonic, and mixed stay off the map until then.
+      </p>
+    </section>
   );
 }
 

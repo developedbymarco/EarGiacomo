@@ -108,12 +108,12 @@ describe("guided path progress", () => {
     });
     expect(nodes.find((node) => node.slug === "seconds")?.status).toBe("unlocked");
     expect(nodes.find((node) => node.slug === "visual-seconds")?.status).toBe("locked");
-    expect(lockReason(visual!, CURRICULUM_NODES, new Set())).toMatch(/Major and minor seconds/);
+    expect(lockReason(visual!, CURRICULUM_NODES, new Set())).toMatch(/Seconds, ascending/);
   });
 
   it("continues an in-progress lesson before a later ready one", () => {
     const nodes = decorateNodes(CURRICULUM_NODES, {
-      passingSlugs: new Set(["seconds"]),
+      passingSlugs: new Set(["seconds", "seconds-descending", "seconds-melodic", "seconds-harmonic", "seconds-mixed"]),
       sessionCounts: new Map([
         ["seconds", 1],
         ["thirds", 1],
@@ -148,9 +148,24 @@ describe("guided path progress", () => {
       expect(reaches(node.slug, node.slug)).toBe(false);
     }
     expect(CURRICULUM_NODES.some((node) => node.path === "cadences")).toBe(true);
+    expect(CURRICULUM_NODES.find((node) => node.slug === "seconds")?.config.presentation).toEqual(["ascending"]);
+    expect(CURRICULUM_NODES.find((node) => node.slug === "seconds-mixed")?.config.presentation).toEqual([
+      "ascending",
+      "descending",
+      "harmonic",
+    ]);
+    expect(CURRICULUM_NODES.find((node) => node.slug === "thirds")?.prerequisites).toEqual(["seconds-mixed"]);
+    expect(CURRICULUM_NODES.find((node) => node.slug === "major-minor-triads")?.config.presentation).toEqual(["melodicAscending"]);
+    expect(CURRICULUM_NODES.find((node) => node.slug === "triads-mixed")?.config.presentation).toEqual([
+      "harmonic",
+      "melodicAscending",
+      "melodicDescending",
+    ]);
+    expect(CURRICULUM_NODES.find((node) => node.slug === "add-augmented")?.prerequisites).toEqual(["triads-mixed"]);
     const sql = [
       "supabase/migrations/20260927193000_curriculum.sql",
       "supabase/migrations/20260927210000_depth.sql",
+      "supabase/migrations/20260928010000_presentation_lessons.sql",
     ]
       .map((file) => readFileSync(path.join(process.cwd(), file), "utf8"))
       .join("\n");

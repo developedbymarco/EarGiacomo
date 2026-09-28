@@ -446,11 +446,11 @@ function describeStimulus(question: Question): string {
   if (question.mode === "piano") return "Name what the highlighted keys spell.";
   if (question.mode === "staff") return "Name what is written on the staff.";
   if (question.type === "cadence") return "Two chords";
-  if (question.type === "interval" && question.direction === "ascending") return "Rising";
-  if (question.type === "interval" && question.direction === "descending") return "Falling";
-  if (question.type === "chord" && question.presentation === "melodicAscending") return "Rising";
-  if (question.type === "chord" && question.presentation === "melodicDescending") return "Falling";
-  return "Together";
+  if (question.type === "interval" && question.direction === "ascending") return "Ascending";
+  if (question.type === "interval" && question.direction === "descending") return "Descending";
+  if (question.type === "chord" && question.presentation === "melodicAscending") return "Ascending";
+  if (question.type === "chord" && question.presentation === "melodicDescending") return "Descending";
+  return "Harmonic";
 }
 
 function pianoBounds(notes: number[]): { low: number; high: number } {

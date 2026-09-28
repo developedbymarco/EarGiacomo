@@ -2,7 +2,8 @@ import { cache } from "react";
 import { getAccountContext } from "@/lib/account/session";
 import { decorateNodes, type MasteryRow, type ProgressNode } from "@/lib/curriculum/progress";
 import { CONCERT_GRAND } from "@/lib/practice/settings";
-import { CURRICULUM_NODES, FOUNDATION_SLUGS } from "@/lib/curriculum/seed";
+import { CURRICULUM_NODES, FOUNDATION_SLUGS, PRESENTATION_SLUGS } from "@/lib/curriculum/seed";
+import { DEPTH_NODES } from "@/lib/curriculum/depth";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseEnv } from "@/lib/supabase/env";
 
@@ -17,6 +18,7 @@ export interface PathPageData {
   giacominos: number;
   economyReady: boolean;
   depthReady: boolean;
+  presentationReady: boolean;
   pianoId: string;
 }
 
@@ -41,6 +43,7 @@ export const getPathData = cache(async (): Promise<PathPageData> => {
     giacominos: account.profile?.giacominos ?? 0,
     economyReady: false,
     depthReady: false,
+    presentationReady: false,
     pianoId: CONCERT_GRAND.id,
   };
   if (!supabaseEnv()) return base;
@@ -53,7 +56,8 @@ export const getPathData = cache(async (): Promise<PathPageData> => {
     const foundationReady = FOUNDATION_SLUGS.every((slug) => known.has(slug));
     if (!foundationReady) return base;
     const costs = new Map(catalog.map((row) => [row.slug as string, Number(row.unlock_cost)]));
-    const depthReady = CURRICULUM_NODES.every((node) => known.has(node.slug));
+    const depthReady = DEPTH_NODES.every((node) => known.has(node.slug));
+    const presentationReady = PRESENTATION_SLUGS.every((slug) => known.has(slug));
     const priced = CURRICULUM_NODES.filter((node) => known.has(node.slug)).map((node) => ({
       ...node,
       unlockCost: costs.get(node.slug) ?? node.unlockCost,
@@ -66,6 +70,7 @@ export const getPathData = cache(async (): Promise<PathPageData> => {
         ready: true,
         economyReady,
         depthReady,
+        presentationReady,
         pianoId,
         nodes: decorateNodes(priced, emptyProgress),
         now: Date.now(),
@@ -114,6 +119,7 @@ export const getPathData = cache(async (): Promise<PathPageData> => {
       giacominos: account.profile?.giacominos ?? 0,
       economyReady,
       depthReady,
+      presentationReady,
       pianoId,
       mastery,
       latest: latestSession

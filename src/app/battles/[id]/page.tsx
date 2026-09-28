@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { cancelBattleAction, ensureBattleQuestions, respondBattleAction } from "@/app/battles/actions";
+import { BattleLobby } from "@/components/battles/BattleLobby";
 import { BattleRoom } from "@/components/battles/BattleRoom";
 import { Button } from "@/components/ui/button";
 import { getAccountContext } from "@/lib/account/session";
@@ -55,6 +56,7 @@ export default async function BattlePage({
       {error ? <p className="text-rose">{error}</p> : null}
       {view.status === "pending" ? (
         <section className="space-y-4">
+          <BattleLobby id={view.id} />
           <h1 className="font-serif text-5xl text-cream">{view.youAre === "challenger" ? `Waiting for ${them}` : `${them} challenged you`}</h1>
           <p className="text-lg text-parchment">
             {presetLabel(view.preset)} · {view.questionCount} questions · {stakeLabel(view.stake)}

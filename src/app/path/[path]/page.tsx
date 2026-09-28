@@ -4,7 +4,7 @@ import { StartLessonButton } from "@/components/path/StartLessonButton";
 import { UnlockLessonButton } from "@/components/path/UnlockLessonButton";
 import { getPathData } from "@/lib/curriculum/load";
 import { conceptLine, lessonToSettings, lockReason, statusLabel } from "@/lib/curriculum/progress";
-import { isPathId, PATHS } from "@/lib/curriculum/seed";
+import { CURRICULUM_NODES, isPathId, PATHS } from "@/lib/curriculum/seed";
 
 export default async function PathDetailPage({ params }: { params: Promise<{ path: string }> }) {
   const { path: pathId } = await params;
@@ -24,6 +24,12 @@ export default async function PathDetailPage({ params }: { params: Promise<{ pat
         <h1 className="mt-3 font-serif text-5xl text-cream">{path.title}</h1>
         <p className="mt-3 max-w-2xl text-lg text-parchment">{path.lede}</p>
       </div>
+      {data.ready && !data.presentationReady && (pathId === "intervals" || pathId === "chords") ? (
+        <p className="text-parchment">
+          Run supabase/migrations/20260928010000_presentation_lessons.sql in the Supabase SQL editor, then reload. The
+          ascending, descending, melodic, harmonic, and mixed lessons stay off this path until then.
+        </p>
+      ) : null}
 
       {nodes.length === 0 ? (
         <p className="text-parchment">
@@ -60,7 +66,7 @@ export default async function PathDetailPage({ params }: { params: Promise<{ pat
                 {concepts ? <p className="mt-2 text-parchment">{concepts}</p> : null}
                 {node.status === "locked" ? (
                   <p className="mt-2 text-parchment">
-                    {lockReason(node, data.nodes, passingFrom(data.nodes))}
+                    {lockReason(node, CURRICULUM_NODES, passingFrom(data.nodes))}
                     {node.unlockCost > 0 ? ` Then it costs ${node.unlockCost} Giacominos.` : ""}
                   </p>
                 ) : null}

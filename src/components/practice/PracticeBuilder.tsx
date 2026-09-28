@@ -37,6 +37,22 @@ const INTERVAL_PRESETS: Array<{ label: string; intervals: IntervalQuality[] }> =
 
 const MORE_INTERVALS: IntervalQuality[] = ["A4", "m6", "M6", "m7", "M7", "m9", "M9", "m10", "M10", "P11", "P12", "m13", "M13", "m14", "M14", "P15"];
 
+const INTERVAL_PLAYED: Array<{ id: string; label: string; values: Direction[] }> = [
+  { id: "ascending", label: "Ascending", values: ["ascending"] },
+  { id: "descending", label: "Descending", values: ["descending"] },
+  { id: "melodic", label: "Melodic", values: ["ascending", "descending"] },
+  { id: "harmonic", label: "Harmonic", values: ["harmonic"] },
+  { id: "mixed", label: "Mixed", values: ["ascending", "descending", "harmonic"] },
+];
+
+const CHORD_PLAYED: Array<{ id: string; label: string; values: ChordPresentation[] }> = [
+  { id: "ascending", label: "Ascending", values: ["melodicAscending"] },
+  { id: "descending", label: "Descending", values: ["melodicDescending"] },
+  { id: "melodic", label: "Melodic", values: ["melodicAscending", "melodicDescending"] },
+  { id: "harmonic", label: "Harmonic", values: ["harmonic"] },
+  { id: "mixed", label: "Mixed", values: ["harmonic", "melodicAscending", "melodicDescending"] },
+];
+
 const TRIAD_PRESETS: Array<{ label: string; triads: TriadQuality[] }> = [
   { label: "Major and minor", triads: ["major", "minor"] },
   { label: "Add augmented", triads: ["major", "minor", "augmented"] },
@@ -198,21 +214,12 @@ export function PracticeBuilder({
             />
           ))}
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Toggle
-            checked={draft.directions.includes("ascending")}
-            label="Ascending"
-            onChange={() => setDraft(toggleDirection(draft, "ascending"))}
-          />
-          <Toggle
-            checked={draft.directions.includes("descending")}
-            label="Descending"
-            onChange={() => setDraft(toggleDirection(draft, "descending"))}
-          />
-          <Toggle
-            checked={draft.directions.includes("harmonic")}
-            label="Together"
-            onChange={() => setDraft(toggleDirection(draft, "harmonic"))}
+        <div className="space-y-2">
+          <p className="text-parchment">How it is played</p>
+          <PlayedAs
+            active={playedAsId(draft.directions, INTERVAL_PLAYED)}
+            options={INTERVAL_PLAYED}
+            onChoose={(directions) => setDraft({ ...draft, directions })}
           />
         </div>
       </section>
@@ -258,23 +265,15 @@ export function PracticeBuilder({
             />
           ))}
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Toggle
-            checked={draft.presentations.includes("harmonic")}
-            label="Together"
-            onChange={() => setDraft(togglePresentation(draft, "harmonic"))}
-          />
-          <Toggle
-            checked={draft.presentations.includes("melodicAscending")}
-            label="Rising"
-            onChange={() => setDraft(togglePresentation(draft, "melodicAscending"))}
-          />
-          <Toggle
-            checked={draft.presentations.includes("melodicDescending")}
-            label="Falling"
-            onChange={() => setDraft(togglePresentation(draft, "melodicDescending"))}
+        <div className="space-y-2">
+          <p className="text-parchment">How it is played</p>
+          <PlayedAs
+            active={playedAsId(draft.presentations, CHORD_PLAYED)}
+            options={CHORD_PLAYED}
+            onChoose={(presentations) => setDraft({ ...draft, presentations })}
           />
         </div>
+        <p className="text-sm text-parchment/80">Seventh chords use this same choice.</p>
       </section>
 
       <section className="space-y-3">
@@ -430,16 +429,29 @@ function toggleTriad(draft: PracticeDraft, triad: TriadQuality): PracticeDraft {
   return { ...draft, triads };
 }
 
-function toggleDirection(draft: PracticeDraft, direction: Direction): PracticeDraft {
-  const directions = draft.directions.includes(direction)
-    ? draft.directions.filter((item) => item !== direction)
-    : [...draft.directions, direction];
-  return { ...draft, directions };
+function playedAsId<T extends string>(selected: readonly T[], options: Array<{ id: string; values: readonly T[] }>): string | null {
+  const match = options.find(
+    (option) => option.values.length === selected.length && option.values.every((value) => selected.includes(value)),
+  );
+  return match?.id ?? null;
 }
 
-function togglePresentation(draft: PracticeDraft, presentation: ChordPresentation): PracticeDraft {
-  const presentations = draft.presentations.includes(presentation)
-    ? draft.presentations.filter((item) => item !== presentation)
-    : [...draft.presentations, presentation];
-  return { ...draft, presentations };
+function PlayedAs<T extends string>({
+  active,
+  options,
+  onChoose,
+}: {
+  active: string | null;
+  options: Array<{ id: string; label: string; values: T[] }>;
+  onChoose: (values: T[]) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((option) => (
+        <Button key={option.id} type="button" variant={active === option.id ? "gold" : "ghost"} onClick={() => onChoose(option.values)}>
+          {option.label}
+        </Button>
+      ))}
+    </div>
+  );
 }

@@ -26,7 +26,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const account = await getAccountContext();
   return (
     <html lang="en" className={`${sans.variable} ${serif.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col">
+      <body className="flex min-h-full flex-col overflow-x-hidden">
         <SiteHeader
           signedIn={Boolean(account.user)}
           xp={account.profile?.xp ?? null}
