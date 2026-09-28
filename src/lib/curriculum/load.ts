@@ -50,8 +50,8 @@ export const getPathData = cache(async (): Promise<PathPageData> => {
 
   try {
     const supabase = await createClient();
-    const { data: catalog, error } = await supabase.from("curriculum_nodes").select("id, slug, unlock_cost");
-    if (error || !catalog) return base;
+    const catalog = await readCatalog(supabase);
+    if (!catalog) return base;
     const known = new Set(catalog.map((row) => row.slug as string));
     const foundationReady = FOUNDATION_SLUGS.every((slug) => known.has(slug));
     if (!foundationReady) return base;
@@ -63,7 +63,6 @@ export const getPathData = cache(async (): Promise<PathPageData> => {
       unlockCost: costs.get(node.slug) ?? node.unlockCost,
     }));
     const economyReady = (costs.get("add-augmented") ?? 0) > 0;
-    const pianoId = await preferredPianoSlug(supabase, account.profile?.preferred_piano_id ?? null);
     if (!account.user) {
       return {
         ...base,
@@ -71,14 +70,14 @@ export const getPathData = cache(async (): Promise<PathPageData> => {
         economyReady,
         depthReady,
         presentationReady,
-        pianoId,
+        pianoId: CONCERT_GRAND.id,
         nodes: decorateNodes(priced, emptyProgress),
         now: Date.now(),
       };
     }
 
     const idToSlug = new Map(catalog.map((row) => [row.id as string, row.slug as string]));
-    const [sessionsResult, masteryResult, unlocksResult] = await Promise.all([
+    const [sessionsResult, masteryResult, unlocksResult, pianoId] = await Promise.all([
       supabase
         .from("practice_sessions")
         .select("node_id, mode, question_count, correct_count, completed_at")
@@ -89,6 +88,7 @@ export const getPathData = cache(async (): Promise<PathPageData> => {
         .select("concept_key, mastery, attempts, correct, last_practiced_at, last_correct, confusion_map")
         .eq("user_id", account.user.id),
       supabase.from("user_unlocks").select("node_id").eq("user_id", account.user.id),
+      preferredPianoSlug(supabase, account.profile?.preferred_piano_id ?? null),
     ]);
 
     const sessions = sessionsResult.data ?? [];
@@ -164,6 +164,21 @@ function toMasteryRow(row: {
     lastCorrect: row.last_correct,
     confusionMap,
   };
+}
+
+type CatalogRow = { id: string; slug: string; unlock_cost: number | string };
+
+let catalogCache: { at: number; rows: CatalogRow[] } | null = null;
+
+async function readCatalog(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<CatalogRow[] | null> {
+  const now = Date.now();
+  if (catalogCache && now - catalogCache.at < 20_000) return catalogCache.rows;
+  const { data, error } = await supabase.from("curriculum_nodes").select("id, slug, unlock_cost");
+  if (error || !data) return catalogCache?.rows ?? null;
+  catalogCache = { at: now, rows: data };
+  return catalogCache.rows;
 }
 
 async function preferredPianoSlug(

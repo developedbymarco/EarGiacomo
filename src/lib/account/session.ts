@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { jwtPayload } from "@/lib/supabase/access-token";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseEnv } from "@/lib/supabase/env";
 
@@ -29,69 +30,77 @@ export interface AccountContext {
 
 const empty: AccountContext = { configured: false, user: null, profile: null, profileIssue: null, friendsReady: false };
 
+const baseColumns =
+  "id, username, display_name, avatar_url, preferred_piano_id, default_range_low, default_range_high, xp, giacominos, account_level";
 const privacyColumns = "profile_visibility, show_accuracy, allow_challenges, show_battle_history";
+
+const loggedOut: AccountContext = { configured: true, user: null, profile: null, profileIssue: null, friendsReady: false };
 
 export const getAccountContext = cache(async (): Promise<AccountContext> => {
   if (!supabaseEnv()) return empty;
 
   try {
     const supabase = await createClient();
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) {
-      return { configured: true, user: null, profile: null, profileIssue: null, friendsReady: false };
+    const { data } = await supabase.auth.getSession();
+    const accessToken = data.session?.access_token;
+    const claims = accessToken ? jwtPayload(accessToken) : null;
+    const userId = typeof claims?.sub === "string" ? claims.sub : null;
+    if (!userId) return loggedOut;
+
+    const withPrivacy = await supabase
+      .from("profiles")
+      .select(`${baseColumns}, ${privacyColumns}`)
+      .eq("id", userId)
+      .maybeSingle();
+
+    let friendsReady = false;
+    let profile = withPrivacy.data as Profile | null;
+    let profileError = withPrivacy.error;
+    if (profileError && missingColumn(profileError.message)) {
+      const fallback = await supabase.from("profiles").select(baseColumns).eq("id", userId).maybeSingle();
+      profile = fallback.data as Profile | null;
+      profileError = fallback.error;
+    } else if (!profileError && profile) {
+      friendsReady = true;
     }
 
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select(
-        "id, username, display_name, avatar_url, preferred_piano_id, default_range_low, default_range_high, xp, giacominos, account_level",
-      )
-      .eq("id", data.user.id)
-      .maybeSingle();
+    if (profileError && authRejected(profileError.message)) return loggedOut;
 
     const message = profileError?.message?.toLowerCase() ?? "";
     const unmigrated =
       Boolean(profileError) &&
       (message.includes("schema cache") || message.includes("does not exist") || message.includes("could not find"));
-
-    let friendsReady = false;
-    let privacy = {
-      profile_visibility: "public" as const,
-      show_accuracy: true,
-      allow_challenges: true,
-      show_battle_history: false,
-    };
-    if (profile) {
-      const privacyResult = await supabase.from("profiles").select(privacyColumns).eq("id", data.user.id).maybeSingle();
-      if (!privacyResult.error && privacyResult.data) {
-        friendsReady = true;
-        const row = privacyResult.data;
-        privacy = {
-          profile_visibility:
-            row.profile_visibility === "friends" || row.profile_visibility === "private" ? row.profile_visibility : "public",
-          show_accuracy: Boolean(row.show_accuracy),
-          allow_challenges: Boolean(row.allow_challenges),
-          show_battle_history: Boolean(row.show_battle_history),
-        };
-      }
-    }
-
+    const row = profile;
+    const visibility = row?.profile_visibility;
     return {
       configured: true,
-      user: { id: data.user.id, email: data.user.email ?? "" },
-      profile: profile
+      user: { id: userId, email: typeof claims?.email === "string" ? claims.email : "" },
+      profile: row
         ? {
-            ...(profile as Profile),
-            ...privacy,
-            xp: Number(profile.xp ?? 0),
-            giacominos: Number(profile.giacominos ?? 0),
-            account_level: Number(profile.account_level ?? 1),
+            ...row,
+            profile_visibility: visibility === "friends" || visibility === "private" ? visibility : "public",
+            show_accuracy: row.show_accuracy !== false,
+            allow_challenges: row.allow_challenges !== false,
+            show_battle_history: Boolean(row.show_battle_history),
+            xp: Number(row.xp ?? 0),
+            giacominos: Number(row.giacominos ?? 0),
+            account_level: Number(row.account_level ?? 1),
           }
         : null,
-      profileIssue: profile ? null : unmigrated ? "unmigrated" : profileError || !profile ? "missing" : null,
+      profileIssue: row ? null : unmigrated ? "unmigrated" : "missing",
       friendsReady,
     };
   } catch {
-    return { configured: true, user: null, profile: null, profileIssue: null, friendsReady: false };
+    return loggedOut;
   }
 });
+
+function missingColumn(message: string | undefined): boolean {
+  const text = message?.toLowerCase() ?? "";
+  return text.includes("schema cache") || text.includes("does not exist") || text.includes("could not find");
+}
+
+function authRejected(message: string | undefined): boolean {
+  const text = message?.toLowerCase() ?? "";
+  return text.includes("jwt") || text.includes("not authenticated");
+}

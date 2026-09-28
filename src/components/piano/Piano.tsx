@@ -22,6 +22,7 @@ export function Piano({
   const notes = Array.from({ length: high - low + 1 }, (_, index) => low + index);
   const whites = notes.filter((midi) => !isBlack(midi));
   const blacks = notes.filter((midi) => isBlack(midi));
+  const lit = new Set(highlighted);
 
   useEffect(() => {
     const whiteNotes = Array.from({ length: high - low + 1 }, (_, index) => low + index).filter(
@@ -60,17 +61,17 @@ export function Piano({
             type="button"
             disabled={!interactive}
             aria-label={midiToNoteName(midi)}
-            aria-pressed={highlighted.includes(midi)}
+            aria-pressed={lit.has(midi)}
             onClick={() => onPlay(midi)}
             className={`h-full flex-1 border border-espresso/30 ${
-              highlighted.includes(midi) ? "bg-gold" : "bg-parchment"
+              lit.has(midi) ? "bg-gold" : "bg-parchment"
             } disabled:opacity-80`}
           />
         ))}
       </div>
       <div className="pointer-events-none absolute inset-0">
         {blacks.map((midi) => {
-          const whiteIndex = whites.filter((white) => white < midi).length - 1;
+          const whiteIndex = whites.reduce((found, white, index) => (white < midi ? index : found), -1);
           const left = ((whiteIndex + 1) / whites.length) * 100;
           return (
             <button
@@ -78,11 +79,11 @@ export function Piano({
               type="button"
               disabled={!interactive}
               aria-label={midiToNoteName(midi)}
-              aria-pressed={highlighted.includes(midi)}
+              aria-pressed={lit.has(midi)}
               onClick={() => onPlay(midi)}
               style={{ left: `calc(${left}% - 0.7rem)` }}
               className={`pointer-events-auto absolute top-0 h-20 w-6 rounded-b-md border border-espresso ${
-                highlighted.includes(midi) ? "bg-gold text-espresso" : "bg-espresso"
+                lit.has(midi) ? "bg-gold text-espresso" : "bg-espresso"
               } disabled:opacity-80`}
             />
           );

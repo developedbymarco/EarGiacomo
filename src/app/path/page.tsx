@@ -114,7 +114,15 @@ export default async function PathHomePage() {
               className="overflow-hidden rounded-3xl border border-gold/30 bg-plum/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cream"
             >
               <div className="relative aspect-[4/3]">
-                <Image src={scene.src} alt={scene.alt} fill sizes="(min-width: 640px) 24rem, 100vw" className="object-cover" />
+                <Image
+                  src={scene.src}
+                  alt={scene.alt}
+                  fill
+                  priority={path.id === "intervals"}
+                  unoptimized
+                  sizes="(min-width: 640px) 24rem, 100vw"
+                  className="object-cover"
+                />
               </div>
               <div className="p-5">
                 <h2 className="font-serif text-3xl text-cream">{path.title}</h2>

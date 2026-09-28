@@ -7,8 +7,19 @@ const PASS_BONUS_BY_DIFFICULTY: Record<number, { first: number; repeat: number }
   4: { first: 100, repeat: 40 },
 };
 
-export function unlockCostFor(input: { difficulty: number; prerequisites: readonly string[] }): number {
-  if (input.prerequisites.length === 0) return 0;
+const FREE_LADDER = new Set([
+  "seconds-descending",
+  "seconds-melodic",
+  "seconds-harmonic",
+  "seconds-mixed",
+  "triads-descending",
+  "triads-melodic",
+  "triads-harmonic",
+  "triads-mixed",
+]);
+
+export function unlockCostFor(input: { slug?: string; difficulty: number; prerequisites: readonly string[] }): number {
+  if (input.prerequisites.length === 0 || (input.slug != null && FREE_LADDER.has(input.slug))) return 0;
   return COST_BY_DIFFICULTY[input.difficulty] ?? 40;
 }
 

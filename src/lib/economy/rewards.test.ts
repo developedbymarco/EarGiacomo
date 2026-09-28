@@ -60,6 +60,8 @@ describe("economy", () => {
 
   it("prices the next lesson from difficulty and leaves the first lesson free", () => {
     expect(unlockCostFor({ difficulty: 1, prerequisites: [] })).toBe(0);
+    expect(unlockCostFor({ difficulty: 1, prerequisites: ["seconds"], slug: "seconds-descending" })).toBe(0);
+    expect(unlockCostFor({ difficulty: 1, prerequisites: ["seconds"], slug: "visual-seconds" })).toBe(30);
     expect(unlockCostFor({ difficulty: 2, prerequisites: ["major-minor-triads"] })).toBe(40);
     const sql = readFileSync(path.join(process.cwd(), "supabase/migrations/20260927200000_economy.sql"), "utf8");
     for (const node of CURRICULUM_NODES) {

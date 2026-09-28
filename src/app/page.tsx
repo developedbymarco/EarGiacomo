@@ -57,6 +57,7 @@ export default function Home() {
               alt={scenes.hero.alt}
               fill
               priority
+              unoptimized
               sizes="(min-width: 1024px) 52vw, 100vw"
               className="object-cover"
             />
@@ -72,7 +73,7 @@ export default function Home() {
           {ways.map((way) => (
             <li key={way.title} className="overflow-hidden rounded-[2rem] border border-gold/25 bg-plum/40">
               <div className="relative aspect-[4/3]">
-                <Image src={way.scene.src} alt={way.scene.alt} fill sizes="(min-width: 768px) 30vw, 100vw" className="object-cover" />
+                <Image src={way.scene.src} alt={way.scene.alt} fill unoptimized sizes="(min-width: 768px) 30vw, 100vw" className="object-cover" />
               </div>
               <div className="p-5">
                 <h3 className="font-serif text-4xl text-cream">{way.title}</h3>
@@ -95,10 +96,11 @@ export default function Home() {
               <li key={path.id}>
                 <Link href={`/path/${path.id}`} className="group relative block overflow-hidden rounded-[2rem] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cream">
                   <div className="relative aspect-[4/3]">
-                    <Image
+                      <Image
                       src={scene.src}
                       alt=""
                       fill
+                      unoptimized
                       sizes="(min-width: 640px) 46vw, 100vw"
                       className="object-cover transition duration-500 group-hover:scale-[1.03]"
                     />
@@ -118,7 +120,7 @@ export default function Home() {
       <section className="bg-parchment text-espresso">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 md:grid-cols-2 md:py-20">
           <div className="relative mx-auto aspect-square w-full max-w-md overflow-hidden rounded-[2rem] shadow-[0_24px_60px_rgb(36_28_25/0.25)]">
-            <Image src={scenes.coins.src} alt={scenes.coins.alt} fill sizes="(min-width: 768px) 28rem, 100vw" className="object-cover" />
+            <Image src={scenes.coins.src} alt={scenes.coins.alt} fill unoptimized sizes="(min-width: 768px) 28rem, 100vw" className="object-cover" />
           </div>
           <div>
             <h2 className="font-serif text-5xl sm:text-6xl">Giacominos</h2>
