@@ -97,6 +97,7 @@ export async function updatePrivacyAction(_prev: { error?: string; message?: str
       show_accuracy: parsed.data.showAccuracy,
       allow_challenges: parsed.data.allowChallenges,
       show_battle_history: parsed.data.showBattleHistory,
+      ...(formData.get("leaderboardReady") === "1" ? { show_on_leaderboard: formData.get("showOnLeaderboard") === "on" } : {}),
     })
     .eq("id", data.user.id);
   if (error) {
@@ -108,5 +109,6 @@ export async function updatePrivacyAction(_prev: { error?: string; message?: str
   }
   revalidatePath("/account");
   revalidatePath("/friends");
+  revalidatePath("/leaderboard");
   return { message: "Privacy saved." };
 }

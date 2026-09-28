@@ -21,6 +21,7 @@ Practice works without an account. Accounts use hosted Supabase:
 10. Run `supabase/migrations/20260927240000_battles.sql` for friend battles. A match can be free, or staked at 10, 25, or 50 Giacominos.
 11. Run `supabase/migrations/20260928000000_round_payout.sql` so every round pays Giacominos, including a round with no correct answers.
 12. Run `supabase/migrations/20260928010000_presentation_lessons.sql` so listening lessons build from ascending to descending, melodic, harmonic, and then mixed.
+13. Run `supabase/migrations/20260928020000_leaderboard.sql` for the public Ear Rating. It uses recent accuracy, not Giacominos, and a player can hide their row.
 
 The finished site is meant to run on a VPS. Auth and data stay on hosted Supabase.
 

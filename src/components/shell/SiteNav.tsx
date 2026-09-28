@@ -34,6 +34,7 @@ export function SiteNav({
     { href: "/path", label: "Path" },
     { href: "/practice", label: "Practice" },
     { href: "/exam", label: "Exam" },
+    { href: "/leaderboard", label: "Board" },
     ...(signedIn
       ? [
           { href: "/friends", label: "Friends" },

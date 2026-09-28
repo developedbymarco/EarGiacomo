@@ -10,11 +10,13 @@ export function PrivacyForm({
   showAccuracy,
   allowChallenges,
   showBattleHistory,
+  showOnLeaderboard,
 }: {
   profileVisibility: "public" | "friends" | "private";
   showAccuracy: boolean;
   allowChallenges: boolean;
   showBattleHistory: boolean;
+  showOnLeaderboard: boolean | null;
 }) {
   const [state, action, pending] = useActionState(updatePrivacyAction, null);
 
@@ -32,7 +34,13 @@ export function PrivacyForm({
       <Check name="showAccuracy" label="Show accuracy to people who can see your profile" defaultChecked={showAccuracy} />
       <Check name="allowChallenges" label="Allow friend challenges" defaultChecked={allowChallenges} />
       <Check name="showBattleHistory" label="Show battle history" defaultChecked={showBattleHistory} />
-      <p className="text-sm text-parchment/80">Challenges and battle history apply when battles are added.</p>
+      {showOnLeaderboard != null ? (
+        <>
+          <input type="hidden" name="leaderboardReady" value="1" />
+          <Check name="showOnLeaderboard" label="Show my Ear Rating on the public board" defaultChecked={showOnLeaderboard} />
+        </>
+      ) : null}
+      <p className="text-sm text-parchment/80">A private profile, or hidden accuracy, also stays off the public board.</p>
       <FormNote state={state} />
       <Button type="submit" disabled={pending}>
         {pending ? "Saving…" : "Save privacy"}

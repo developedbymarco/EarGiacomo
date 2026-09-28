@@ -4,6 +4,7 @@ import { PrivacyForm } from "@/components/friends/PrivacyForm";
 import { SetupNotice } from "@/components/auth/SetupNotice";
 import { getAccountContext } from "@/lib/account/session";
 import { levelForXp, xpToReachLevel } from "@/lib/economy/rewards";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function AccountPage() {
   const account = await getAccountContext();
@@ -22,6 +23,7 @@ export default async function AccountPage() {
     );
   }
 
+  const showOnLeaderboard = await leaderboardChoice(account.user.id);
   const level = levelForXp(account.profile.xp);
   const intoLevel = account.profile.xp - xpToReachLevel(level);
   const span = xpToReachLevel(level + 1) - xpToReachLevel(level);
@@ -45,9 +47,17 @@ export default async function AccountPage() {
             showAccuracy={account.profile.show_accuracy}
             allowChallenges={account.profile.allow_challenges}
             showBattleHistory={account.profile.show_battle_history}
+            showOnLeaderboard={showOnLeaderboard}
           />
         </div>
       ) : null}
     </div>
   );
+}
+
+async function leaderboardChoice(userId: string): Promise<boolean | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("profiles").select("show_on_leaderboard").eq("id", userId).maybeSingle();
+  if (error || !data) return null;
+  return data.show_on_leaderboard !== false;
 }
