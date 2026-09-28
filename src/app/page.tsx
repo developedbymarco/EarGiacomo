@@ -23,16 +23,16 @@ const ways = [
 
 export default function Home() {
   return (
-    <div className="relative left-1/2 w-screen max-w-[100vw] -translate-x-1/2">
-      <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 pt-4 pb-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-16 lg:pt-8 lg:pb-24">
+    <div className="relative -mx-4">
+      <section className="mx-auto grid max-w-6xl items-center gap-6 px-4 pt-2 pb-10 sm:gap-10 sm:pt-4 sm:pb-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-16 lg:pt-8 lg:pb-24">
         <div>
           <p className="text-sm font-semibold tracking-[0.28em] text-gold uppercase">Ear training</p>
-          <h1 className="mt-4 font-serif text-6xl leading-[0.92] text-cream sm:text-8xl">
+          <h1 className="mt-3 font-serif text-5xl leading-[0.92] text-cream sm:mt-4 sm:text-7xl lg:text-8xl">
             Hear it.
             <br />
             Name it.
           </h1>
-          <p className="mt-6 max-w-md text-xl leading-relaxed text-parchment">
+          <p className="mt-4 max-w-md text-lg leading-relaxed text-parchment sm:mt-6 sm:text-xl">
             A practice room for intervals, chords, the staff, and cadences. Short rounds, a path that opens as you improve, and matches with friends.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
@@ -57,7 +57,7 @@ export default function Home() {
           </div>
         </div>
         <figure className="relative">
-          <div className="relative aspect-[16/10] overflow-hidden rounded-[2rem] shadow-[0_40px_80px_rgb(0_0_0/0.45)]">
+          <div className="relative aspect-[2/1] overflow-hidden rounded-3xl shadow-[0_24px_48px_rgb(0_0_0/0.45)] sm:aspect-[16/10] sm:rounded-[2rem] sm:shadow-[0_40px_80px_rgb(0_0_0/0.45)]">
             <Image
               src={scenes.hero.src}
               alt={scenes.hero.alt}
@@ -72,49 +72,52 @@ export default function Home() {
         </figure>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 pb-16">
-        <h2 className="font-serif text-5xl text-cream">How a round feels</h2>
-        <p className="mt-3 max-w-xl text-lg text-parchment">One sound, or one picture. You name it. The answer list stays in theory order.</p>
-        <ul className="mt-8 grid gap-5 md:grid-cols-3">
+      <section className="mx-auto max-w-6xl px-4 pb-10 sm:pb-16">
+        <h2 className="font-serif text-4xl text-cream sm:text-5xl">How a round feels</h2>
+        <p className="mt-2 max-w-xl text-base text-parchment sm:mt-3 sm:text-lg">One sound, or one picture. You name it. The answer list stays in theory order.</p>
+        <ul className="mt-5 grid gap-3 md:mt-8 md:grid-cols-3 md:gap-5">
           {ways.map((way) => (
-            <li key={way.title} className="overflow-hidden rounded-[2rem] border border-gold/25 bg-plum/40">
-              <div className="relative aspect-[4/3]">
-                <Image src={way.scene.src} alt={way.scene.alt} fill unoptimized sizes="(min-width: 768px) 30vw, 100vw" className="object-cover" />
+            <li key={way.title} className="grid grid-cols-[6.5rem_minmax(0,1fr)] overflow-hidden rounded-2xl border border-gold/25 bg-plum/40 md:block md:rounded-[2rem]">
+              <div className="relative min-h-24 md:aspect-[4/3]">
+                <Image src={way.scene.src} alt={way.scene.alt} fill unoptimized sizes="(min-width: 768px) 30vw, 7rem" className="object-cover" />
               </div>
-              <div className="p-5">
-                <h3 className="font-serif text-4xl text-cream">{way.title}</h3>
-                <p className="mt-2 text-parchment">{way.text}</p>
+              <div className="flex min-w-0 flex-col justify-center p-3 md:p-5">
+                <h3 className="font-serif text-2xl text-cream md:text-4xl">{way.title}</h3>
+                <p className="mt-1 text-sm text-parchment md:mt-2 md:text-base">{way.text}</p>
               </div>
             </li>
           ))}
         </ul>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 pb-20">
+      <section className="mx-auto max-w-6xl px-4 pb-12 sm:pb-20">
         <div className="max-w-xl">
-          <h2 className="font-serif text-5xl text-cream">Four paths</h2>
-          <p className="mt-3 text-lg text-parchment">Pass a lesson, then spend Giacominos to open the next one. Open practice stays beside the path.</p>
+          <h2 className="font-serif text-4xl text-cream sm:text-5xl">Four paths</h2>
+          <p className="mt-2 text-base text-parchment sm:mt-3 sm:text-lg">Pass a lesson, then spend Giacominos to open the next one. Open practice stays beside the path.</p>
         </div>
-        <ul className="mt-8 grid gap-4 sm:grid-cols-2">
+        <ul className="mt-5 grid gap-3 sm:mt-8 sm:grid-cols-2 sm:gap-4">
           {PATHS.map((path) => {
             const scene = scenes[path.id];
             return (
               <li key={path.id}>
-                <Link href={`/path/${path.id}`} className="group relative block overflow-hidden rounded-[2rem] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cream">
-                  <div className="relative aspect-[4/3]">
-                      <Image
+                <Link
+                  href={`/path/${path.id}`}
+                  className="group relative grid grid-cols-[6.5rem_minmax(0,1fr)] overflow-hidden rounded-2xl border border-gold/25 bg-plum/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cream sm:block sm:rounded-[2rem] sm:border-transparent"
+                >
+                  <div className="relative min-h-24 sm:aspect-[16/10] lg:aspect-[4/3]">
+                    <Image
                       src={scene.src}
                       alt=""
                       fill
                       unoptimized
-                      sizes="(min-width: 640px) 46vw, 100vw"
+                      sizes="(min-width: 1024px) 32vw, (min-width: 640px) 46vw, 7rem"
                       className="object-cover transition duration-500 group-hover:scale-[1.03]"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-espresso via-espresso/25 to-transparent" />
-                    <div className="absolute inset-x-0 bottom-0 p-6">
-                      <h3 className="font-serif text-4xl text-cream">{path.title}</h3>
-                      <p className="mt-1 text-parchment">{path.lede}</p>
-                    </div>
+                    <div className="absolute inset-0 hidden bg-gradient-to-t from-espresso via-espresso/25 to-transparent sm:block" />
+                  </div>
+                  <div className="flex min-w-0 flex-col justify-center p-3 sm:absolute sm:inset-x-0 sm:bottom-0 sm:p-6">
+                    <h3 className="font-serif text-2xl text-cream sm:text-4xl">{path.title}</h3>
+                    <p className="mt-1 text-sm text-parchment sm:text-base">{path.lede}</p>
                   </div>
                 </Link>
               </li>
@@ -124,12 +127,12 @@ export default function Home() {
       </section>
 
       <section className="bg-parchment text-espresso">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 md:grid-cols-2 md:py-20">
-          <div className="relative mx-auto aspect-square w-full max-w-md overflow-hidden rounded-[2rem] shadow-[0_24px_60px_rgb(36_28_25/0.25)]">
+        <div className="mx-auto grid max-w-6xl items-center gap-5 px-4 py-10 sm:gap-8 sm:py-14 md:grid-cols-2 md:py-20">
+          <div className="relative aspect-[5/2] w-full overflow-hidden rounded-3xl shadow-[0_16px_40px_rgb(36_28_25/0.2)] sm:mx-auto sm:aspect-square sm:max-w-md sm:rounded-[2rem] sm:shadow-[0_24px_60px_rgb(36_28_25/0.25)]">
             <Image src={scenes.coins.src} alt={scenes.coins.alt} fill unoptimized sizes="(min-width: 768px) 28rem, 100vw" className="object-cover" />
           </div>
           <div>
-            <h2 className="font-serif text-5xl sm:text-6xl">Giacominos</h2>
+            <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl">Giacominos</h2>
             <p className="mt-4 text-lg leading-relaxed">
               Play money, not a score. Every finished round pays some, even when every answer is wrong. A lesson you pass pays more. Spend them to open the next step, or stake them on a match with a friend.
             </p>
@@ -145,8 +148,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-3xl px-4 py-20 text-center sm:py-28">
-        <h2 className="font-serif text-5xl text-cream sm:text-7xl">Sit down for one round.</h2>
+      <section className="mx-auto max-w-3xl px-4 py-12 text-center sm:py-20 lg:py-28">
+        <h2 className="font-serif text-4xl text-cream sm:text-5xl lg:text-7xl">Sit down for one round.</h2>
         <p className="mx-auto mt-4 max-w-lg text-xl text-parchment">Ten questions. A few minutes. The piano is already in the room.</p>
         <Link
           href="/practice"

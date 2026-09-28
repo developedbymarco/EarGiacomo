@@ -39,6 +39,7 @@ export default async function AccountPage() {
         displayName={account.profile.display_name ?? ""}
         rangeLow={account.profile.default_range_low ?? 48}
         rangeHigh={account.profile.default_range_high ?? 72}
+        noteNames={account.profile.note_names}
       />
       {account.friendsReady ? (
         <div className="mx-auto max-w-xl">

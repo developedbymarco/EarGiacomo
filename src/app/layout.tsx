@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Cormorant_Garamond, Source_Sans_3 } from "next/font/google";
-import { SiteFooter, SiteHeader } from "@/components/shell/SiteHeader";
+import { NoteNamesProvider } from "@/components/shell/NoteNames";
+import { SiteFooter } from "@/components/shell/SiteHeader";
+import { MobileHeader, SideBar, TabBar } from "@/components/shell/SiteNav";
 import { getAccountContext } from "@/lib/account/session";
 import "./globals.css";
 
@@ -26,14 +28,18 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const account = await getAccountContext();
   return (
     <html lang="en" className={`${sans.variable} ${serif.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col overflow-x-hidden">
-        <SiteHeader
-          signedIn={Boolean(account.user)}
-          xp={account.profile?.xp ?? null}
-          giacominos={account.profile?.giacominos ?? null}
-        />
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">{children}</main>
-        <SiteFooter />
+      <body className="min-h-full overflow-x-hidden">
+        <div className="lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]">
+          <SideBar signedIn={Boolean(account.user)} xp={account.profile?.xp ?? null} giacominos={account.profile?.giacominos ?? null} />
+          <div className="flex min-h-dvh min-w-0 flex-col">
+            <MobileHeader signedIn={Boolean(account.user)} xp={account.profile?.xp ?? null} giacominos={account.profile?.giacominos ?? null} />
+            <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
+              <NoteNamesProvider value={account.profile?.note_names}>{children}</NoteNamesProvider>
+            </main>
+            <SiteFooter />
+          </div>
+        </div>
+        <TabBar />
       </body>
     </html>
   );

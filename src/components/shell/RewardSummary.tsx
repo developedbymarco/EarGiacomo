@@ -3,6 +3,39 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { levelForXp, xpToReachLevel } from "@/lib/economy/rewards";
 
+export function RewardCard({ xp, giacominos }: { xp: number; giacominos: number }) {
+  const level = levelForXp(xp);
+  const floor = xpToReachLevel(level);
+  const next = xpToReachLevel(level + 1);
+  const span = Math.max(1, next - floor);
+  const intoLevel = Math.max(0, xp - floor);
+  const fraction = Math.min(1, intoLevel / span);
+
+  return (
+    <section className="rounded-3xl border border-gold/40 bg-plum/50 p-4" aria-label={`Level ${level}, ${giacominos} Giacominos`}>
+      <p className="font-serif text-2xl text-cream">Level {level}</p>
+      <div
+        className="mt-3 h-2 overflow-hidden rounded-full bg-espresso"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={span}
+        aria-valuenow={intoLevel}
+        aria-label="Experience toward the next level"
+      >
+        <div className="h-full rounded-full bg-gold" style={{ width: `${fraction * 100}%` }} />
+      </div>
+      <p className="mt-2 text-sm text-parchment">
+        {intoLevel} of {span} XP
+      </p>
+      <p className="mt-3 flex items-center gap-2 font-serif text-3xl text-gold">
+        <CoinIcon className="size-7" />
+        {giacominos}
+      </p>
+      <p className="text-sm text-parchment">Giacominos</p>
+    </section>
+  );
+}
+
 export function RewardSummary({
   xp,
   giacominos,
@@ -10,7 +43,7 @@ export function RewardSummary({
 }: {
   xp: number;
   giacominos: number;
-  layout?: "inline" | "menu";
+  layout?: "inline" | "menu" | "badge";
 }) {
   const level = levelForXp(xp);
   const floor = xpToReachLevel(level);
@@ -51,10 +84,23 @@ export function RewardSummary({
         } ${open ? "border-gold bg-plum" : "border-gold/70 bg-plum/70 hover:border-gold hover:bg-plum"}`}
         aria-expanded={open}
         aria-controls={panelId}
+        aria-label={`Level ${level}, ${giacominos} Giacominos`}
         onClick={() => setOpen((value) => !value)}
       >
-        <span>
-          Level {level} · {giacominos} Giacominos
+        <span className={layout === "badge" ? "inline-flex items-center gap-3" : undefined}>
+          {layout === "badge" ? (
+            <>
+              <span className="font-serif text-lg text-gold">Lv {level}</span>
+              <span className="inline-flex items-center gap-1.5">
+                <CoinIcon className="size-4" />
+                <span>{giacominos}</span>
+              </span>
+            </>
+          ) : (
+            <>
+              Level {level} · {giacominos} Giacominos
+            </>
+          )}
         </span>
         <svg viewBox="0 0 20 20" aria-hidden="true" className={`size-4 text-gold ${open ? "rotate-180" : ""}`}>
           <path d="M5 7.5 10 12.5 15 7.5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
@@ -83,10 +129,23 @@ export function RewardSummary({
           <p className="mt-2 text-sm text-parchment">
             {intoLevel} of {span} XP toward level {level + 1}
           </p>
-          <p className="mt-5 font-serif text-4xl text-gold">{giacominos}</p>
+          <p className="mt-5 flex items-center gap-2 font-serif text-4xl text-gold">
+            <CoinIcon className="size-8" />
+            {giacominos}
+          </p>
           <p className="text-parchment">Giacominos</p>
         </div>
       ) : null}
     </div>
+  );
+}
+
+function CoinIcon({ className = "size-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={`shrink-0 text-gold ${className}`}>
+      <circle cx="12" cy="12" r="9" fill="currentColor" />
+      <circle cx="12" cy="12" r="6" fill="none" className="stroke-espresso" strokeWidth="1.6" />
+      <circle cx="12" cy="12" r="2.2" className="fill-espresso" />
+    </svg>
   );
 }

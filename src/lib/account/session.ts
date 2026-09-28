@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { noteNaming, type NoteNaming } from "@/lib/music-theory/naming";
 import { jwtPayload } from "@/lib/supabase/access-token";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseEnv } from "@/lib/supabase/env";
@@ -18,6 +19,7 @@ export interface Profile {
   show_accuracy: boolean;
   allow_challenges: boolean;
   show_battle_history: boolean;
+  note_names: NoteNaming;
 }
 
 export interface AccountContext {
@@ -47,11 +49,14 @@ export const getAccountContext = cache(async (): Promise<AccountContext> => {
     const userId = typeof claims?.sub === "string" ? claims.sub : null;
     if (!userId) return loggedOut;
 
-    const withPrivacy = await supabase
+    let withPrivacy = await supabase
       .from("profiles")
-      .select(`${baseColumns}, ${privacyColumns}`)
+      .select(`${baseColumns}, ${privacyColumns}, note_names`)
       .eq("id", userId)
       .maybeSingle();
+    if (withPrivacy.error && missingColumn(withPrivacy.error.message) && withPrivacy.error.message.toLowerCase().includes("note_names")) {
+      withPrivacy = await supabase.from("profiles").select(`${baseColumns}, ${privacyColumns}`).eq("id", userId).maybeSingle();
+    }
 
     let friendsReady = false;
     let profile = withPrivacy.data as Profile | null;
@@ -82,6 +87,7 @@ export const getAccountContext = cache(async (): Promise<AccountContext> => {
             show_accuracy: row.show_accuracy !== false,
             allow_challenges: row.allow_challenges !== false,
             show_battle_history: Boolean(row.show_battle_history),
+            note_names: noteNaming(row.note_names),
             xp: Number(row.xp ?? 0),
             giacominos: Number(row.giacominos ?? 0),
             account_level: Number(row.account_level ?? 1),

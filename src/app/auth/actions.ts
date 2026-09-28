@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
@@ -122,6 +123,7 @@ export async function updateProfileAction(_prev: AuthState, formData: FormData):
     displayName: String(formData.get("displayName") ?? ""),
     rangeLow: Number(formData.get("rangeLow")),
     rangeHigh: Number(formData.get("rangeHigh")),
+    noteNames: String(formData.get("noteNames") ?? "letters"),
   });
   if (!parsed.success) return { error: firstIssue(parsed.error) };
 
@@ -129,16 +131,23 @@ export async function updateProfileAction(_prev: AuthState, formData: FormData):
   const { data } = await supabase.auth.getUser();
   if (!data.user) redirect("/login");
 
-  const { error } = await supabase
-    .from("profiles")
-    .update({
-      username: parsed.data.username,
-      display_name: parsed.data.displayName,
-      default_range_low: parsed.data.rangeLow,
-      default_range_high: parsed.data.rangeHigh,
-    })
-    .eq("id", data.user.id);
+  const saved = {
+    username: parsed.data.username,
+    display_name: parsed.data.displayName,
+    default_range_low: parsed.data.rangeLow,
+    default_range_high: parsed.data.rangeHigh,
+    note_names: parsed.data.noteNames,
+  };
+  let { error } = await supabase.from("profiles").update(saved).eq("id", data.user.id);
+  if (error && missingProfileColumn(error.message)) {
+    const withoutNames = { ...saved };
+    delete withoutNames.note_names;
+    const retry = await supabase.from("profiles").update(withoutNames).eq("id", data.user.id);
+    if (!retry.error) return { error: "Run supabase/migrations/20260928030000_note_names.sql, then save Do Re Mi again." };
+    error = retry.error;
+  }
   if (error) return { error: authErrorMessage(error) };
+  revalidatePath("/", "layout");
   return { message: "Saved." };
 }
 
@@ -195,4 +204,9 @@ export async function deleteAccountAction(_prev: AuthState, formData: FormData):
   if (error) return { error: "The account could not be deleted. Try again." };
   await supabase.auth.signOut();
   redirect("/");
+}
+
+function missingProfileColumn(message: string): boolean {
+  const text = message.toLowerCase();
+  return text.includes("note_names") && (text.includes("schema") || text.includes("does not exist") || text.includes("could not find"));
 }

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { savePracticePreferences } from "@/app/auth/actions";
 import { previewPiano, unlockAudio } from "@/lib/audio/engine";
 import { FOUNDATION_INTERVALS, FOUNDATION_TRIADS } from "@/lib/curriculum/foundations";
+import { useNoteNames } from "@/components/shell/NoteNames";
+import { nameNotes } from "@/lib/music-theory/naming";
 import { midiToNoteName, SELECTABLE_NOTES } from "@/lib/music-theory/notes";
 import type { ChordPresentation, Direction, IntervalQuality, SeventhQuality, StimulusMode, TriadQuality } from "@/lib/music-theory/types";
 import { SEVENTH_QUALITIES } from "@/lib/music-theory/types";
@@ -69,6 +71,7 @@ export function PracticeBuilder({
   savedRangeHigh?: number | null;
 }) {
   const router = useRouter();
+  const noteNames = useNoteNames();
   const [draft, setDraft] = useState<PracticeDraft>(DEFAULT_DRAFT);
   const [customCount, setCustomCount] = useState(false);
   const [ready, setReady] = useState(false);
@@ -319,7 +322,7 @@ export function PracticeBuilder({
             >
               {SELECTABLE_NOTES.map((midi) => (
                 <option key={midi} value={midi}>
-                  {midiToNoteName(midi)}
+                  {nameNotes(midiToNoteName(midi), noteNames)}
                 </option>
               ))}
             </select>
@@ -333,7 +336,7 @@ export function PracticeBuilder({
             >
               {SELECTABLE_NOTES.map((midi) => (
                 <option key={midi} value={midi}>
-                  {midiToNoteName(midi)}
+                  {nameNotes(midiToNoteName(midi), noteNames)}
                 </option>
               ))}
             </select>

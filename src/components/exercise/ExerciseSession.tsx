@@ -13,12 +13,15 @@ import { mistakeDraft, strongest, summarize, weakest } from "@/lib/exercise/resu
 import { useExerciseStore } from "@/lib/exercise/store";
 import { loadSession, loadSessionMeta, saveSession, toSettings } from "@/lib/practice/settings";
 import { generateSession, type Question } from "@/lib/question-generation/generate";
+import { nameNotes } from "@/lib/music-theory/naming";
 import { CADENCE_LABELS, cadenceGuidance, CHORD_LABELS, chordGuidance, INTERVAL_LABELS, intervalGuidance } from "@/lib/question-generation/labels";
+import { useNoteNames } from "@/components/shell/NoteNames";
 import type { CadenceId } from "@/lib/music-theory/cadences";
 import type { ChordQuality, IntervalQuality } from "@/lib/music-theory/types";
 
 export function ExerciseSession() {
   const router = useRouter();
+  const noteNames = useNoteNames();
   const reducedMotion = useReducedMotion();
   const phase = useExerciseStore((state) => state.phase);
   const index = useExerciseStore((state) => state.index);
@@ -243,7 +246,7 @@ export function ExerciseSession() {
             You chose {labelFor(question, selected ?? "")}. Correct answer: {labelFor(question, correctValue)}.
           </p>
           <p className="mt-2 text-parchment">{guidance(question, selected)}</p>
-          <p className="mt-3 font-serif text-2xl text-gold">{question.spelled.join("  ·  ")}</p>
+          <p className="mt-3 font-serif text-2xl text-gold">{nameNotes(question.spelled.join("  ·  "), noteNames)}</p>
           {repeats > 0 ? <p className="mt-2 text-sm text-parchment">Repeated {repeats} {repeats === 1 ? "time" : "times"}.</p> : null}
         </motion.section>
       ) : null}

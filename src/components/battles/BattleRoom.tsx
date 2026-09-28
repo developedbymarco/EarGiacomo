@@ -12,6 +12,8 @@ import type { BattleStimulus, BattleView } from "@/lib/battles/types";
 import { createSupabaseBrowser } from "@/lib/supabase/browser";
 import type { CadenceId } from "@/lib/music-theory/cadences";
 import type { ChordQuality, IntervalQuality } from "@/lib/music-theory/types";
+import { useNoteNames } from "@/components/shell/NoteNames";
+import { nameNotes } from "@/lib/music-theory/naming";
 import { CADENCE_LABELS, cadenceGuidance, CHORD_LABELS, chordGuidance, INTERVAL_LABELS, intervalGuidance } from "@/lib/question-generation/labels";
 
 export function BattleRoom({ battle }: { battle: BattleView }) {
@@ -222,6 +224,7 @@ function QuestionPanel({
   onChoose: (answer: string) => void;
   onRepeat: () => void;
 }) {
+  const noteNames = useNoteNames();
   const bounds = pianoBounds(question.notes);
   return (
     <>
@@ -284,7 +287,9 @@ function QuestionPanel({
             {feedback.correct ? "Correct" : "Not this time"}. {labelFor(question, feedback.correctAnswer)}. +{feedback.awarded}
           </p>
           <p className="mt-2 text-parchment">{guidanceFor(question, feedback.correctAnswer)}</p>
-          {feedback.spelled.length > 0 ? <p className="mt-3 font-serif text-2xl text-gold">{feedback.spelled.join("  ·  ")}</p> : null}
+          {feedback.spelled.length > 0 ? (
+            <p className="mt-3 font-serif text-2xl text-gold">{nameNotes(feedback.spelled.join("  ·  "), noteNames)}</p>
+          ) : null}
         </section>
       ) : null}
     </>

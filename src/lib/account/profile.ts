@@ -47,6 +47,7 @@ export const profileFormSchema = z
     displayName: displayNameSchema,
     rangeLow: z.number().int().min(21).max(108),
     rangeHigh: z.number().int().min(21).max(108),
+    noteNames: z.enum(["letters", "solfege"]),
   })
   .refine((value) => value.rangeHigh > value.rangeLow, {
     message: "The highest note must sit above the lowest.",

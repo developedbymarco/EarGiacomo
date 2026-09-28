@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
+import { useNoteNames } from "@/components/shell/NoteNames";
+import { nameNotes } from "@/lib/music-theory/naming";
 import { midiToNoteName } from "@/lib/music-theory/notes";
 
 const WHITE_KEYS = ["a", "s", "d", "f", "g", "h", "j", "k"];
@@ -19,6 +21,7 @@ export function Piano({
   interactive: boolean;
   onPlay: (midi: number) => void;
 }) {
+  const noteNames = useNoteNames();
   const notes = Array.from({ length: high - low + 1 }, (_, index) => low + index);
   const whites = notes.filter((midi) => !isBlack(midi));
   const blacks = notes.filter((midi) => isBlack(midi));
@@ -60,7 +63,7 @@ export function Piano({
             key={midi}
             type="button"
             disabled={!interactive}
-            aria-label={midiToNoteName(midi)}
+            aria-label={nameNotes(midiToNoteName(midi), noteNames)}
             aria-pressed={lit.has(midi)}
             onClick={() => onPlay(midi)}
             className={`h-full flex-1 border border-espresso/30 ${
@@ -78,7 +81,7 @@ export function Piano({
               key={midi}
               type="button"
               disabled={!interactive}
-              aria-label={midiToNoteName(midi)}
+              aria-label={nameNotes(midiToNoteName(midi), noteNames)}
               aria-pressed={lit.has(midi)}
               onClick={() => onPlay(midi)}
               style={{ left: `calc(${left}% - 0.7rem)` }}

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { StartLessonButton } from "@/components/path/StartLessonButton";
 import { UnlockLessonButton } from "@/components/path/UnlockLessonButton";
 import { getPathData } from "@/lib/curriculum/load";
-import { conceptLine, lessonToSettings, lockReason, statusLabel } from "@/lib/curriculum/progress";
+import { conceptLine, continueNode, lessonToSettings, lockReason, statusLabel } from "@/lib/curriculum/progress";
 import { CURRICULUM_NODES, isPathId, PATHS } from "@/lib/curriculum/seed";
 
 export default async function PathDetailPage({ params }: { params: Promise<{ path: string }> }) {
@@ -12,17 +12,22 @@ export default async function PathDetailPage({ params }: { params: Promise<{ pat
   const path = PATHS.find((item) => item.id === pathId)!;
   const data = await getPathData();
   const nodes = data.nodes.filter((node) => node.path === pathId);
+  const spotlight = continueNode(nodes)?.slug ?? null;
+  const passedCount = nodes.filter((node) => node.passed).length;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div>
         <p>
-          <Link href="/path" className="text-gold underline-offset-4 hover:underline">
+          <Link href="/path" className="text-sm text-cream/70 underline-offset-4 hover:text-cream hover:underline">
             All paths
           </Link>
         </p>
-        <h1 className="mt-3 font-serif text-5xl text-cream">{path.title}</h1>
-        <p className="mt-3 max-w-2xl text-lg text-parchment">{path.lede}</p>
+        <p className="mt-4 text-xs font-semibold tracking-[0.22em] text-gold uppercase">
+          {nodes.length > 0 ? `${passedCount} of ${nodes.length} passed` : "Path"}
+        </p>
+        <h1 className="mt-2 font-serif text-[2.75rem] leading-none text-cream sm:text-6xl">{path.title}</h1>
+        <p className="mt-3 max-w-xs text-base text-cream/75">{path.lede}</p>
       </div>
       {data.ready && !data.presentationReady && (pathId === "intervals" || pathId === "chords") ? (
         <p className="text-parchment">
@@ -36,62 +41,81 @@ export default async function PathDetailPage({ params }: { params: Promise<{ pat
           These lessons appear after supabase/migrations/20260927210000_depth.sql is applied.
         </p>
       ) : (
-        <ol className="space-y-4 border-l border-gold/40 py-2 pl-6">
-          {nodes.map((node) => {
+        <ol className="space-y-3">
+          {nodes.map((node, index) => {
             const concepts = conceptLine(node.concepts, data.mastery);
             const locked = node.status === "locked";
+            const here = node.slug === spotlight;
             const canStart = data.ready && data.signedIn && !locked && node.status !== "purchasable";
+            const done = node.passed || node.status === "mastered";
             return (
-              <li
-                key={node.slug}
-                className={
-                  locked
-                    ? "rounded-3xl border border-dashed border-parchment/35 bg-espresso/70 p-5"
-                    : "rounded-3xl border border-gold/30 bg-plum/50 p-5"
-                }
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    {locked ? (
-                      <p className="text-lg text-parchment">Locked</p>
-                    ) : (
-                      <p className="text-sm tracking-wide text-gold uppercase">{statusLabel(node.status)}</p>
-                    )}
-                    <h2 className={`mt-1 font-serif text-3xl ${locked ? "text-parchment/75" : "text-cream"}`}>{node.title}</h2>
-                  </div>
-                  {locked ? <LockMark className="size-11 shrink-0 text-parchment/80" /> : null}
+              <li key={node.slug} className="flex gap-3">
+                <div className="flex w-4 shrink-0 flex-col items-center" aria-hidden="true">
+                  <span
+                    className={
+                      here
+                        ? "mt-6 size-3 rounded-full bg-gold ring-4 ring-gold/25"
+                        : done
+                          ? "mt-6 size-2.5 rounded-full bg-gold/80"
+                          : "mt-6 size-2.5 rounded-full border border-cream/30"
+                    }
+                  />
+                  {index < nodes.length - 1 ? <span className="mt-1 w-px flex-1 bg-cream/35" /> : null}
                 </div>
-                <p className={`mt-2 ${locked ? "text-parchment/60" : "text-parchment"}`}>{node.description}</p>
-                {node.passed && node.status !== "mastered" ? <p className="mt-2 text-parchment">Lesson passed.</p> : null}
-                {concepts ? <p className="mt-2 text-parchment">{concepts}</p> : null}
-                {node.status === "locked" ? (
-                  <p className="mt-2 text-parchment">
-                    {lockReason(node, CURRICULUM_NODES, passingFrom(data.nodes))}
-                    {node.unlockCost > 0 ? ` Then it costs ${node.unlockCost} Giacominos.` : ""}
-                  </p>
-                ) : null}
-                {!data.ready && node.status === "unlocked" ? (
-                  <p className="mt-2 text-parchment">Run the path migration, then this lesson can be saved.</p>
-                ) : null}
-                {node.status === "purchasable" && data.signedIn ? (
-                  <div className="mt-4">
-                    <UnlockLessonButton slug={node.slug} cost={node.unlockCost} balance={data.giacominos} />
+                <article
+                  className={
+                    here
+                      ? "mb-1 min-w-0 flex-1 rounded-2xl bg-parchment p-4 text-espresso sm:p-5"
+                      : locked
+                        ? "mb-1 min-w-0 flex-1 rounded-2xl border border-cream/10 bg-black/25 p-4 sm:p-5"
+                        : "mb-1 min-w-0 flex-1 rounded-2xl bg-plum/50 p-4 sm:p-5"
+                  }
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className={`text-xs font-semibold tracking-[0.16em] uppercase ${here ? "text-burgundy" : "text-cream/55"}`}>
+                        {locked ? "Locked" : statusLabel(node.status)}
+                      </p>
+                      <h2 className={`mt-1 font-serif text-3xl ${here ? "text-espresso" : locked ? "text-cream/70" : "text-cream"}`}>{node.title}</h2>
+                    </div>
+                    {locked || node.status === "purchasable" ? <LockMark className={here ? "size-6 text-espresso/50" : "size-6 text-cream/45"} /> : null}
                   </div>
-                ) : null}
-                <div className="mt-4">
+                  <p className={`mt-2 text-sm ${here ? "text-espresso/75" : locked ? "text-cream/50" : "text-cream/75"}`}>{node.description}</p>
+                  {node.passed && node.status !== "mastered" ? (
+                    <p className={`mt-2 text-sm ${here ? "text-espresso/70" : "text-cream/70"}`}>Lesson passed.</p>
+                  ) : null}
+                  {concepts ? <p className={`mt-2 text-sm ${here ? "text-espresso/70" : "text-cream/70"}`}>{concepts}</p> : null}
+                  {node.status === "locked" ? (
+                    <p className="mt-2 text-sm text-cream/55">
+                      {lockReason(node, CURRICULUM_NODES, passingFrom(data.nodes))}
+                      {node.unlockCost > 0 ? ` Then ${node.unlockCost} Giacominos.` : ""}
+                    </p>
+                  ) : null}
+                  {!data.ready && node.status === "unlocked" ? (
+                    <p className={`mt-2 text-sm ${here ? "text-espresso/70" : "text-cream/70"}`}>Run the path migration, then this lesson can be saved.</p>
+                  ) : null}
+                  {node.status === "purchasable" && data.signedIn ? (
+                    <div className="mt-4">
+                      <UnlockLessonButton quiet slug={node.slug} cost={node.unlockCost} balance={data.giacominos} />
+                    </div>
+                  ) : null}
                   {canStart ? (
-                    <StartLessonButton
-                      label={node.status === "unlocked" ? "Start" : "Practice"}
-                      settings={lessonToSettings(node.config, "lesson", data.range, data.pianoId)}
-                      meta={{ mode: "guided", nodeSlug: node.slug }}
-                    />
+                    <div className="mt-4">
+                      <StartLessonButton
+                        className={here ? "w-full sm:w-auto sm:min-w-56" : ""}
+                        variant={here ? "gold" : "ghost"}
+                        label={node.status === "unlocked" ? "Start lesson" : "Continue lesson"}
+                        settings={lessonToSettings(node.config, "lesson", data.range, data.pianoId)}
+                        meta={{ mode: "guided", nodeSlug: node.slug }}
+                      />
+                    </div>
                   ) : null}
                   {data.ready && !data.signedIn && node.status === "unlocked" ? (
-                    <Link href="/login" className="text-gold underline-offset-4 hover:underline">
+                    <Link href="/login" className={`mt-4 inline-flex font-semibold underline-offset-4 hover:underline ${here ? "text-burgundy" : "text-gold"}`}>
                       Log in to start
                     </Link>
                   ) : null}
-                </div>
+                </article>
               </li>
             );
           })}
