@@ -140,8 +140,12 @@ export async function updateProfileAction(_prev: AuthState, formData: FormData):
   };
   let { error } = await supabase.from("profiles").update(saved).eq("id", data.user.id);
   if (error && missingProfileColumn(error.message)) {
-    const withoutNames = { ...saved };
-    delete withoutNames.note_names;
+    const withoutNames = {
+      username: saved.username,
+      display_name: saved.display_name,
+      default_range_low: saved.default_range_low,
+      default_range_high: saved.default_range_high,
+    };
     const retry = await supabase.from("profiles").update(withoutNames).eq("id", data.user.id);
     if (!retry.error) return { error: "Run supabase/migrations/20260928030000_note_names.sql, then save Do Re Mi again." };
     error = retry.error;
